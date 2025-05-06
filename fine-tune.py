@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from datasets import load_dataset, Dataset
+from datasets import load_dataset
 
 from transformers import AutoTokenizer, EsmConfig, EsmForSequenceClassification, TrainingArguments, Trainer
 
@@ -98,8 +98,7 @@ def main():
         desc="Processing dataset"
     )
 
-    print(dataset)
-    exit()
+    training, testing = dataset["train"].train_test_split(test_size=0.1).values()
 
     config = EsmConfig.from_pretrained(args.base_model)
     
@@ -120,19 +119,19 @@ def main():
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
         num_train_epochs=args.num_epochs,
+        label_names=["labels"],
         logging_dir=args.run_dir_path,
         bf16="cuda" in args.device and is_bf16_supported(),
         torch_compile=True,
-        seed=args.seed,
+        seed=args.seed if args.seed is not None else 42,
     )
 
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=dataset["train"],
-        eval_dataset=dataset["test"],
+        train_dataset=training,
+        eval_dataset=testing,
         processing_class=tokenizer,
-        # data_collator=collate_fn,
         compute_loss_func=loss_function,
     )
 
