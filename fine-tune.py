@@ -23,6 +23,7 @@ def main():
 
     parser.add_argument("--base_model", default="facebook/esm2_t6_8M_UR50D", choices=AVAILABLE_BASE_MODELS)
     parser.add_argument("--dataset_path", default="dataset/dataset.jsonl", type=str)
+    parser.add_argument("--num_dataset_processes", default=8, type=int)
     parser.add_argument("--learning_rate", default=1e-4, type=float)
     parser.add_argument("--batch_size", default=16, type=int)
     parser.add_argument("--num_epochs", default=3, type=int)
@@ -63,16 +64,42 @@ def main():
 
     dataset = load_dataset("json", data_files=args.dataset_path)
 
+    def preprocess(sample: dict) -> dict:
+        """
+        Preprocess the dataset sample by tokenizing the protein sequence and
+        converting the label indices to a k-hot vector.
+        """
+
+        # Tokenize the protein sequence
+        inputs = tokenizer(
+            sample["sequence"],
+            padding="max_length",
+            truncation=True,
+            max_length=1024,  # Adjust max_length as needed
+            return_tensors="pt"
+        )
+
+        labels = [0] * 47417
+        
+        for label_index in sample["label_indices"]:
+            labels[label_index] = 1
+
+        # Return the processed sample
+        return {
+            "input_ids": inputs["input_ids"].squeeze(0),
+            "attention_mask": inputs["attention_mask"].squeeze(0),
+            "labels": labels,
+        }
+    
+    dataset = dataset.map(
+        preprocess,
+        remove_columns=["sequence_id", "sequence", "label_indices"],
+        num_proc=args.num_dataset_processes,
+        desc="Processing dataset"
+    )
+
     print(dataset)
     exit()
-
-    # We need give the model samples in the form ...
-    #
-    # input_ids: [234, 534, 23, 234, 543, ...]
-    # label: [1, 0, 1, 0, 0 ...]
-    #
-    # The input_ids are the tokenized protein sequences and the labels are the
-    # corresponding protein function labels. 1 if the sequence has the function, 0 otherwise.
 
     config = EsmConfig.from_pretrained(args.base_model)
     
