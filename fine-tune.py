@@ -26,7 +26,8 @@ from tqdm import tqdm
 
 
 AVAILABLE_BASE_MODELS = {
-    "facebook/esm2_t6_8M_UR50D" "facebook/esm2_t12_35M_UR50D",
+    "facebook/esm2_t6_8M_UR50D",
+    "facebook/esm2_t12_35M_UR50D",
     "facebook/esm2_t30_150M_UR50D",
     "facebook/esm2_t33_650M_UR50D",
     "facebook/esm2_t36_3B_UR50D",
@@ -46,10 +47,10 @@ def main():
     )
     parser.add_argument("--dataset_path", default="dataset/dataset.jsonl", type=str)
     parser.add_argument("--num_dataset_processes", default=8, type=int)
-    parser.add_argument("--learning_rate", default=1e-4, type=float)
+    parser.add_argument("--learning_rate", default=1e-2, type=float)
     parser.add_argument("--rms_decay", default=-0.8, type=float)
     parser.add_argument("--low_memory_optimizer", action="store_true")
-    parser.add_argument("--max_gradient_norm", default=10.0, type=float)
+    parser.add_argument("--max_gradient_norm", default=1.0, type=float)
     parser.add_argument("--batch_size", default=8, type=int)
     parser.add_argument("--gradient_accumulation_steps", default=8, type=int)
     parser.add_argument("--num_epochs", default=3, type=int)
