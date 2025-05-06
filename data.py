@@ -42,9 +42,10 @@ class CAFA5(Dataset):
 
         input_ids = inputs["input_ids"].squeeze(0)
         attn_mask = inputs["attention_mask"].squeeze(0)
-        y = torch.tensor(labels, dtype=torch.float32)
 
-        return input_ids, attn_mask, y
+        labels = torch.tensor(labels, dtype=torch.float32)
+
+        return input_ids, attn_mask, labels
 
     def __len__(self):
         return len(self.dataset)

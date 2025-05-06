@@ -159,23 +159,25 @@ def main():
 
         print("Previous checkpoint resumed successfully")
 
+    model.train()
+
     print("Fine-tuning ...")
 
     for epoch in range(starting_epoch, args.num_epochs + 1):
         total_cross_entropy, total_gradient_norm = 0.0, 0.0
         total_batches, total_steps = 0, 0
 
-        for step, (input_ids, attn_mask, y) in enumerate(
+        for step, (input_ids, attn_mask, labels) in enumerate(
             tqdm(train_loader, desc=f"Epoch {epoch}", leave=False), start=1
         ):
             input_ids = input_ids.to(args.device, non_blocking=True)
             attn_mask = attn_mask.to(args.device, non_blocking=True)
-            y = y.to(args.device, non_blocking=True)
+            labels = labels.to(args.device, non_blocking=True)
 
             with amp_context:
                 y_pred = model.forward(input_ids, attn_mask).logits
 
-                loss = loss_function(y_pred, y)
+                loss = loss_function(y_pred, labels)
 
                 scaled_loss = loss / args.gradient_accumulation_steps
 
@@ -209,17 +211,17 @@ def main():
         if epoch % args.eval_interval == 0:
             model.eval()
 
-            for input_ids, attn_mask, y in tqdm(
+            for input_ids, attn_mask, labels in tqdm(
                 test_loader, desc="Testing", leave=False
             ):
                 input_ids = input_ids.to(args.device, non_blocking=True)
                 attn_mask = attn_mask.to(args.device, non_blocking=True)
-                y = y.to(args.device, non_blocking=True)
+                labels = labels.to(args.device, non_blocking=True)
 
                 with torch.no_grad():
                     y_pred = model.forward(input_ids, attn_mask).logits
 
-                binary_accuracy_metric.update(y_pred, y)
+                binary_accuracy_metric.update(y_pred, labels)
 
             accuracy = binary_accuracy_metric.compute()
 
