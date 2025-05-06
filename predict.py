@@ -21,7 +21,7 @@ AVAILABLE_BASE_MODELS = {
 
 def main():
     parser = ArgumentParser(
-        description="Fine-tune an ESM2 model for protein function classification."
+        description="Predict the gene ontology terms associated with a protein sequence."
     )
 
     parser.add_argument(
