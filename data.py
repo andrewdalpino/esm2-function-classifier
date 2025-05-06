@@ -2,8 +2,6 @@ from datasets import load_dataset
 
 import torch
 
-from torch import Tensor
-
 from torch.utils.data import Dataset
 
 from transformers import EsmTokenizer
@@ -14,6 +12,8 @@ class CAFA5(Dataset):
     The CAFA5 dataset is a collection of protein sequences and their associated
     functional annotations.
     """
+
+    NUM_CLASSES = 47417
 
     def __init__(self, dataset_path: str, tokenizer: EsmTokenizer):
         super().__init__()
@@ -35,7 +35,7 @@ class CAFA5(Dataset):
             return_tensors="pt",
         )
 
-        labels = [0.0] * 47417
+        labels = [0.0] * self.NUM_CLASSES
 
         for label_index in sample["label_indices"]:
             labels[label_index] = 1.0

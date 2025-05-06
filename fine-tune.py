@@ -126,7 +126,7 @@ def main():
     config = EsmConfig.from_pretrained(args.base_model)
 
     config.problem_type = "multi_label_classification"
-    config.num_labels = 47417
+    config.num_labels = CAFA5.NUM_CLASSES
 
     model = EsmForSequenceClassification(config)
 
