@@ -6,7 +6,7 @@ from torch import Tensor
 
 from torch.utils.data import Dataset
 
-from torch.nn.utils.rnn import pad_sequence
+from transformers import EsmTokenizer
 
 
 class CAFA5(Dataset):
@@ -15,7 +15,7 @@ class CAFA5(Dataset):
     functional annotations.
     """
 
-    def __init__(self, dataset_path: str, tokenizer):
+    def __init__(self, dataset_path: str, tokenizer: EsmTokenizer):
         super().__init__()
 
         self.tokenizer = tokenizer
