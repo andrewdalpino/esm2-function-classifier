@@ -1,0 +1,16 @@
+__pycache__/
+.mypy_cache/
+env/
+build/
+develop-eggs/
+dist/
+lib/
+lib64/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+*.sarif
+.venv
+venv/
+ENV/

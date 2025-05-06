@@ -1,0 +1,6 @@
+pandas==2.2.3
+biopython==1.85
+torch==2.7.0
+accelerate==1.6.0
+torchmetrics==1.5.1
+transformers==4.49.0
