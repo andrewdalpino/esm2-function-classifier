@@ -222,6 +222,8 @@ def main():
                 with torch.no_grad():
                     y_pred = model.forward(input_ids, attn_mask).logits
 
+                    y_pred = torch.sigmoid(y_pred)
+
                 binary_accuracy_metric.update(y_pred, labels)
 
             accuracy = binary_accuracy_metric.compute()
