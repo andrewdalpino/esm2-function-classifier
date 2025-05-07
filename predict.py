@@ -8,15 +8,7 @@ from transformers import AutoTokenizer, EsmConfig, EsmForSequenceClassification
 
 from torch.cuda import is_available as cuda_is_available
 
-
-AVAILABLE_BASE_MODELS = {
-    "facebook/esm2_t6_8M_UR50D",
-    "facebook/esm2_t12_35M_UR50D",
-    "facebook/esm2_t30_150M_UR50D",
-    "facebook/esm2_t33_650M_UR50D",
-    "facebook/esm2_t36_3B_UR50D",
-    "facebook/esm2_t48_15B_UR50D",
-}
+from data import CAFA5
 
 
 def main():
@@ -24,11 +16,6 @@ def main():
         description="Predict the gene ontology terms associated with a protein sequence."
     )
 
-    parser.add_argument(
-        "--base_model",
-        default="facebook/esm2_t6_8M_UR50D",
-        choices=AVAILABLE_BASE_MODELS,
-    )
     parser.add_argument(
         "--checkpoint_path", default="./checkpoints/checkpoint.pt", type=str
     )
@@ -44,22 +31,25 @@ def main():
         torch.manual_seed(args.seed)
         random.seed(args.seed)
 
-    tokenizer = AutoTokenizer.from_pretrained(args.base_model)
+    checkpoint = torch.load(
+        args.checkpoint_path, map_location=args.device, weights_only=True
+    )
 
-    config = EsmConfig.from_pretrained(args.base_model)
+    tokenizer = AutoTokenizer.from_pretrained(checkpoint["base_model"])
 
-    config.num_labels = 47417
+    config = EsmConfig.from_pretrained(checkpoint["base_model"])
 
-    model = EsmForSequenceClassification(config)
+    config.problem_type = "multi_label_classification"
+    config.num_labels = CAFA5.NUM_CLASSES
 
-    print("Compiling model")
+    model = EsmForSequenceClassification.from_pretrained(
+        checkpoint["base_model"], config=config
+    )
+
+    print("Compiling model ...")
     model = torch.compile(model)
 
     model = model.to(args.device)
-
-    checkpoint = torch.load(
-        args.checkpoint_path, map_location=args.device, weights_only=False
-    )
 
     model.load_state_dict(checkpoint["model"])
 
@@ -67,34 +57,42 @@ def main():
 
     model.eval()
 
-    torch.set_printoptions(threshold=50000)
-
     while True:
         sequence = input("Enter a sequence: ")
 
-        prompt = tokenizer(
+        sequence = sequence.replace(" ", "").replace("\n", "")
+
+        out = tokenizer(
             sequence,
-            # padding="max_length",
-            truncation=True,
+            padding="max_length",
+            padding_side="right",
             max_length=1024,
-            return_tensors="pt",
+            truncation=True,
         )
 
-        input_ids = prompt["input_ids"].to(args.device)
-        attn_mask = prompt["attention_mask"].to(args.device)
+        input_ids = out["input_ids"]
+        attn_mask = out["attention_mask"]
+
+        input_ids = (
+            torch.tensor(input_ids, dtype=torch.int64).unsqueeze(0).to(args.device)
+        )
+        attn_mask = (
+            torch.tensor(attn_mask, dtype=torch.int64).unsqueeze(0).to(args.device)
+        )
 
         with torch.no_grad():
-            outputs = model(input_ids=input_ids, attention_mask=attn_mask)
+            outputs = model.forward(input_ids, attention_mask=attn_mask)
 
-            logits = outputs.logits.squeeze(0)
+            logits = outputs.logits
 
-            probabilities = torch.sigmoid(logits)
+            probabilities = torch.sigmoid(logits.squeeze(0))
 
-            print(probabilities)
+            sorted, indices = torch.sort(probabilities, descending=True)
 
-            predicted_indices = torch.where(probabilities > 0.5)[0].tolist()
+            indices = indices[:10]
+            sorted = sorted[:10]
 
-            print(predicted_indices)
+            print(sorted, indices)
 
             print("\n")
 

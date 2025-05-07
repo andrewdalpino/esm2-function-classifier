@@ -5,7 +5,7 @@ from functools import partial
 
 import torch
 
-from torch.optim import Adafactor
+from torch.optim import AdamW
 
 from transformers import AutoTokenizer, EsmConfig, EsmForSequenceClassification
 
@@ -14,9 +14,8 @@ from torch.cuda import is_available as cuda_is_available, is_bf16_supported
 from torch.amp import autocast
 from torch.utils.data import random_split
 from torch.nn.utils import clip_grad_norm_
-from torch.nn import BCEWithLogitsLoss
 
-from torchmetrics.classification import BinaryAccuracy
+from torchmetrics.classification import BinaryF1Score
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -46,13 +45,12 @@ def main():
         choices=AVAILABLE_BASE_MODELS,
     )
     parser.add_argument("--dataset_path", default="dataset/dataset.jsonl", type=str)
-    parser.add_argument("--num_dataset_processes", default=8, type=int)
-    parser.add_argument("--learning_rate", default=1e-2, type=float)
-    parser.add_argument("--rms_decay", default=-0.8, type=float)
-    parser.add_argument("--low_memory_optimizer", action="store_true")
+    parser.add_argument("--max_sequence_length", default=1024, type=int)
+    parser.add_argument("--num_dataset_processes", default=1, type=int)
+    parser.add_argument("--learning_rate", default=1e-4, type=float)
     parser.add_argument("--max_gradient_norm", default=1.0, type=float)
-    parser.add_argument("--batch_size", default=8, type=int)
-    parser.add_argument("--gradient_accumulation_steps", default=8, type=int)
+    parser.add_argument("--batch_size", default=32, type=int)
+    parser.add_argument("--gradient_accumulation_steps", default=2, type=int)
     parser.add_argument("--num_epochs", default=3, type=int)
     parser.add_argument("--eval_interval", default=1, type=int)
     parser.add_argument("--eval_ratio", default=0.1, type=float)
@@ -109,7 +107,7 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(args.base_model)
 
-    dataset = CAFA5(args.dataset_path, tokenizer)
+    dataset = CAFA5(args.dataset_path, tokenizer, args.max_sequence_length)
 
     training, testing = random_split(dataset, (1.0 - args.eval_ratio, args.eval_ratio))
 
@@ -128,29 +126,25 @@ def main():
     config.problem_type = "multi_label_classification"
     config.num_labels = CAFA5.NUM_CLASSES
 
-    model = EsmForSequenceClassification(config)
+    model = EsmForSequenceClassification.from_pretrained(args.base_model, config=config)
 
-    print("Compiling model")
+    for param in model.esm.parameters():
+        param.requires_grad = False
+
+    print("Compiling model ...")
     model = torch.compile(model)
 
     model = model.to(args.device)
 
-    loss_function = BCEWithLogitsLoss()
+    optimizer = AdamW(model.parameters(), lr=args.learning_rate)
 
-    optimizer = Adafactor(
-        model.parameters(),
-        lr=args.learning_rate,
-        beta2_decay=args.rms_decay,
-        foreach=not args.low_memory_optimizer,
-    )
-
-    binary_accuracy_metric = BinaryAccuracy(threshold=0.5).to(args.device)
+    f1_metric = BinaryF1Score().to(args.device)
 
     starting_epoch = 1
 
     if args.resume:
         checkpoint = torch.load(
-            args.checkpoint_path, map_location=args.device, weights_only=False
+            args.checkpoint_path, map_location=args.device, weights_only=True
         )
 
         model.load_state_dict(checkpoint["model"])
@@ -162,29 +156,32 @@ def main():
 
     model.train()
 
+    num_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+    print(f"Number of trainable parameters: {num_trainable_params:,}")
+
     print("Fine-tuning ...")
 
     for epoch in range(starting_epoch, args.num_epochs + 1):
         total_cross_entropy, total_gradient_norm = 0.0, 0.0
         total_batches, total_steps = 0, 0
 
-        for step, (input_ids, attn_mask, labels) in enumerate(
+        for step, (x, y, attn_mask) in enumerate(
             tqdm(train_loader, desc=f"Epoch {epoch}", leave=False), start=1
         ):
-            input_ids = input_ids.to(args.device, non_blocking=True)
+            x = x.to(args.device, non_blocking=True)
+            y = y.to(args.device, non_blocking=True)
+
             attn_mask = attn_mask.to(args.device, non_blocking=True)
-            labels = labels.to(args.device, non_blocking=True)
 
             with amp_context:
-                y_pred = model.forward(input_ids, attn_mask).logits
+                out = model.forward(x, attention_mask=attn_mask, labels=y)
 
-                loss = loss_function(y_pred, labels)
-
-                scaled_loss = loss / args.gradient_accumulation_steps
+                scaled_loss = out.loss / args.gradient_accumulation_steps
 
             scaled_loss.backward()
 
-            total_cross_entropy += loss.item()
+            total_cross_entropy += out.loss.item()
             total_batches += 1
 
             if step % args.gradient_accumulation_steps == 0:
@@ -212,34 +209,33 @@ def main():
         if epoch % args.eval_interval == 0:
             model.eval()
 
-            for input_ids, attn_mask, labels in tqdm(
-                test_loader, desc="Testing", leave=False
-            ):
-                input_ids = input_ids.to(args.device, non_blocking=True)
+            for x, y, attn_mask in tqdm(test_loader, desc="Testing", leave=False):
+                x = x.to(args.device, non_blocking=True)
+                y = y.to(args.device, non_blocking=True)
+
                 attn_mask = attn_mask.to(args.device, non_blocking=True)
-                labels = labels.to(args.device, non_blocking=True)
 
                 with torch.no_grad():
-                    y_pred = model.forward(input_ids, attn_mask).logits
+                    out = model.forward(x, attention_mask=attn_mask)
 
-                    y_pred = torch.sigmoid(y_pred)
+                    y_prob = torch.sigmoid(out.logits)
 
-                binary_accuracy_metric.update(y_pred, labels)
+                f1_metric.update(y_prob, y)
 
-            accuracy = binary_accuracy_metric.compute()
+            f1_score = f1_metric.compute()
 
-            logger.add_scalar("Accuracy", accuracy, epoch)
+            logger.add_scalar("F1 Score", f1_score, epoch)
 
-            print(f"Accuracy: {accuracy:.3f}")
+            print(f"F1 Score: {f1_score:.3f}")
 
-            binary_accuracy_metric.reset()
+            f1_metric.reset()
 
             model.train()
 
         if epoch % args.checkpoint_interval == 0:
             checkpoint = {
                 "epoch": epoch,
-                "tokenizer": tokenizer,
+                "base_model": args.base_model,
                 "model": model.state_dict(),
                 "optimizer": optimizer.state_dict(),
             }

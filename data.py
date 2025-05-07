@@ -2,7 +2,10 @@ from datasets import load_dataset
 
 import torch
 
+from torch import Tensor
+
 from torch.utils.data import Dataset
+from torch.nn.utils.rnn import pad_sequence
 
 from transformers import EsmTokenizer
 
@@ -15,37 +18,47 @@ class CAFA5(Dataset):
 
     NUM_CLASSES = 47417
 
-    def __init__(self, dataset_path: str, tokenizer: EsmTokenizer):
+    def __init__(
+        self, dataset_path: str, tokenizer: EsmTokenizer, max_length: int = 1024
+    ):
         super().__init__()
 
+        dataset = load_dataset("json", data_files=dataset_path, split="train")
+
+        self.dataset = dataset
         self.tokenizer = tokenizer
-
-        dataset = load_dataset("json", data_files=dataset_path)
-
-        self.dataset = dataset["train"]
+        self.max_length = max_length
 
     def __getitem__(self, index: int):
         sample = self.dataset[index]
 
-        inputs = self.tokenizer(
+        out = self.tokenizer(
             sample["sequence"],
             padding="max_length",
+            padding_side="right",
+            max_length=self.max_length,
             truncation=True,
-            max_length=1024,
-            return_tensors="pt",
         )
+
+        tokens = out["input_ids"]
+        attn_mask = out["attention_mask"]
 
         labels = [0.0] * self.NUM_CLASSES
 
         for label_index in sample["label_indices"]:
             labels[label_index] = 1.0
 
-        input_ids = inputs["input_ids"].squeeze(0)
-        attn_mask = inputs["attention_mask"].squeeze(0)
+        x = torch.tensor(tokens, dtype=torch.int64)
+        y = torch.tensor(labels, dtype=torch.float32)
 
-        labels = torch.tensor(labels, dtype=torch.float32)
+        attn_mask = torch.tensor(attn_mask, dtype=torch.int64)
 
-        return input_ids, attn_mask, labels
+        assert x.size(0) == self.max_length
+        assert y.size(0) == self.NUM_CLASSES
+
+        assert attn_mask.size(0) == self.max_length
+
+        return x, y, attn_mask
 
     def __len__(self):
         return len(self.dataset)
