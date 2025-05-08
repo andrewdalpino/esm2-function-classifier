@@ -39,6 +39,14 @@ Coming soon ...
 | --device | "cuda" | string | The device to run the computation on ("cuda", "cuda:1", "mps", "cpu", etc). |
 | --seed | None | int | The seed for the random number generator. |
 
+## Training Dashboard
+
+We use [TensorBoard](https://www.tensorflow.org/tensorboard) to capture and display training events such as loss and gradient norm updates. To launch the dashboard server run the following command from the terminal.
+
+```
+tensorboard --logdir=./runs
+```
+
 ## References:
 
 >- Z. Lin, et al. Evolutionary-scale prediction of atomic level protein structure with a language model. 2022.

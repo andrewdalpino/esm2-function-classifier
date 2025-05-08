@@ -15,7 +15,7 @@ from torch.amp import autocast
 from torch.utils.data import random_split
 from torch.nn.utils import clip_grad_norm_
 
-from torchmetrics.classification import BinaryF1Score
+from torchmetrics.classification import BinaryFBetaScore
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -139,7 +139,8 @@ def main():
 
     optimizer = AdamW(model.parameters(), lr=args.learning_rate)
 
-    f1_metric = BinaryF1Score().to(args.device)
+    f1_metric = BinaryFBetaScore(1.0).to(args.device)
+    f2_metric = BinaryFBetaScore(2.0).to(args.device)
 
     starting_epoch = 1
 
@@ -222,14 +223,18 @@ def main():
                     y_prob = torch.sigmoid(out.logits)
 
                 f1_metric.update(y_prob, y)
+                f2_metric.update(y_prob, y)
 
             f1_score = f1_metric.compute()
+            f2_score = f2_metric.compute()
 
             logger.add_scalar("F1 Score", f1_score, epoch)
+            logger.add_scalar("F2 Score", f2_score, epoch)
 
-            print(f"F1 Score: {f1_score:.3f}")
+            print(f"F1 Score: {f1_score:.3f}, F2 Score: {f2_score:.3f}")
 
             f1_metric.reset()
+            f2_metric.reset()
 
             model.train()
 
