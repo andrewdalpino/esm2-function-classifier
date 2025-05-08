@@ -1,5 +1,7 @@
 import random
 
+from math import sqrt
+
 from argparse import ArgumentParser
 from functools import partial
 
@@ -7,7 +9,7 @@ import torch
 
 from torch.optim import AdamW
 
-from transformers import AutoTokenizer, EsmConfig, EsmForSequenceClassification
+from transformers import EsmTokenizer, EsmConfig, EsmForSequenceClassification
 
 from torch.utils.data import DataLoader
 from torch.cuda import is_available as cuda_is_available, is_bf16_supported
@@ -19,7 +21,7 @@ from torchmetrics.classification import BinaryFBetaScore
 
 from torch.utils.tensorboard import SummaryWriter
 
-from data import CAFA5
+from data import CAFA5, NUM_CC_CLASSES
 
 from tqdm import tqdm
 
@@ -44,10 +46,10 @@ def main():
         default="facebook/esm2_t6_8M_UR50D",
         choices=AVAILABLE_BASE_MODELS,
     )
-    parser.add_argument("--dataset_path", default="dataset/dataset.jsonl", type=str)
+    parser.add_argument("--dataset_path", default="dataset/cc_dataset.jsonl", type=str)
     parser.add_argument("--max_sequence_length", default=1024, type=int)
     parser.add_argument("--num_dataset_processes", default=1, type=int)
-    parser.add_argument("--learning_rate", default=1e-4, type=float)
+    parser.add_argument("--learning_rate", default=1e-5, type=float)
     parser.add_argument("--max_gradient_norm", default=1.0, type=float)
     parser.add_argument("--batch_size", default=32, type=int)
     parser.add_argument("--gradient_accumulation_steps", default=2, type=int)
@@ -105,9 +107,9 @@ def main():
 
     logger = SummaryWriter(args.run_dir_path)
 
-    tokenizer = AutoTokenizer.from_pretrained(args.base_model)
+    tokenizer = EsmTokenizer.from_pretrained(args.base_model)
 
-    dataset = CAFA5(args.dataset_path, tokenizer, args.max_sequence_length)
+    dataset = CAFA5(args.dataset_path, tokenizer, NUM_CC_CLASSES, args.max_sequence_length)
 
     training, testing = random_split(dataset, (1.0 - args.eval_ratio, args.eval_ratio))
 
@@ -124,7 +126,7 @@ def main():
     config = EsmConfig.from_pretrained(args.base_model)
 
     config.problem_type = "multi_label_classification"
-    config.num_labels = CAFA5.NUM_CLASSES
+    config.num_labels = dataset.num_classes
 
     model = EsmForSequenceClassification.from_pretrained(args.base_model, config=config)
 

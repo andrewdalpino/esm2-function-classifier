@@ -26,7 +26,7 @@ def main():
 
     if "cuda" in args.device and not cuda_is_available():
         raise RuntimeError("Cuda is not available.")
-    
+
     torch.set_float32_matmul_precision("high")
 
     if args.seed is not None:
@@ -36,8 +36,6 @@ def main():
     checkpoint = torch.load(
         args.checkpoint_path, map_location=args.device, weights_only=True
     )
-
-    checkpoint["base_model"] = "facebook/esm2_t30_150M_UR50D"
 
     tokenizer = AutoTokenizer.from_pretrained(checkpoint["base_model"])
 

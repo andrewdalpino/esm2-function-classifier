@@ -5,9 +5,14 @@ import torch
 from torch import Tensor
 
 from torch.utils.data import Dataset
-from torch.nn.utils.rnn import pad_sequence
 
 from transformers import EsmTokenizer
+
+NUM_MF_CLASSES = 12438
+NUM_CC_CLASSES = 4469
+NUM_BP_CLASSES = 30510
+
+TOTAL_NUM_CLASSES = NUM_MF_CLASSES + NUM_CC_CLASSES + NUM_BP_CLASSES
 
 
 class CAFA5(Dataset):
@@ -16,10 +21,12 @@ class CAFA5(Dataset):
     functional annotations.
     """
 
-    NUM_CLASSES = 47417
-
     def __init__(
-        self, dataset_path: str, tokenizer: EsmTokenizer, max_length: int = 1024
+        self,
+        dataset_path: str,
+        tokenizer: EsmTokenizer,
+        num_classes: int,
+        max_length: int,
     ):
         super().__init__()
 
@@ -27,9 +34,10 @@ class CAFA5(Dataset):
 
         self.dataset = dataset
         self.tokenizer = tokenizer
+        self.num_classes = num_classes
         self.max_length = max_length
 
-    def __getitem__(self, index: int):
+    def __getitem__(self, index: int) -> tuple[Tensor, Tensor, Tensor]:
         sample = self.dataset[index]
 
         out = self.tokenizer(
@@ -43,7 +51,7 @@ class CAFA5(Dataset):
         tokens = out["input_ids"]
         attn_mask = out["attention_mask"]
 
-        labels = [0.0] * self.NUM_CLASSES
+        labels = [0.0] * self.num_classes
 
         for label_index in sample["label_indices"]:
             labels[label_index] = 1.0
@@ -54,7 +62,7 @@ class CAFA5(Dataset):
         attn_mask = torch.tensor(attn_mask, dtype=torch.int64)
 
         assert x.size(0) == self.max_length
-        assert y.size(0) == self.NUM_CLASSES
+        assert y.size(0) == self.num_classes
 
         assert attn_mask.size(0) == self.max_length
 
