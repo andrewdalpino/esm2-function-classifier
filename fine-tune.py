@@ -1,7 +1,5 @@
 import random
 
-from math import sqrt
-
 from argparse import ArgumentParser
 from functools import partial
 
@@ -17,11 +15,11 @@ from torch.amp import autocast
 from torch.utils.data import random_split
 from torch.nn.utils import clip_grad_norm_
 
-from torchmetrics.classification import BinaryFBetaScore
+from torchmetrics.classification import BinaryFBetaScore, BinaryPrecision, BinaryRecall
 
 from torch.utils.tensorboard import SummaryWriter
 
-from data import CAFA5, NUM_CC_CLASSES
+from data import CAFA5
 
 from tqdm import tqdm
 
@@ -46,7 +44,8 @@ def main():
         default="facebook/esm2_t6_8M_UR50D",
         choices=AVAILABLE_BASE_MODELS,
     )
-    parser.add_argument("--dataset_path", default="dataset/cc_dataset.jsonl", type=str)
+    parser.add_argument("--dataset_path", default="./dataset", type=str)
+    parser.add_argument("--dataset_subset", default="cellular-component", type=str)
     parser.add_argument("--max_sequence_length", default=1024, type=int)
     parser.add_argument("--num_dataset_processes", default=1, type=int)
     parser.add_argument("--learning_rate", default=1e-5, type=float)
@@ -83,6 +82,11 @@ def main():
             f"Eval interval must be greater than 0, {args.eval_interval} given."
         )
 
+    if args.eval_ratio < 0 or args.eval_ratio > 1:
+        raise ValueError(
+            f"Eval ratio must be between 0 and 1, {args.eval_ratio} given."
+        )
+
     if args.checkpoint_interval < 1:
         raise ValueError(
             f"Checkpoint interval must be greater than 0, {args.checkpoint_interval} given."
@@ -109,7 +113,12 @@ def main():
 
     tokenizer = EsmTokenizer.from_pretrained(args.base_model)
 
-    dataset = CAFA5(args.dataset_path, tokenizer, NUM_CC_CLASSES, args.max_sequence_length)
+    dataset = CAFA5(
+        args.dataset_path,
+        args.dataset_subset,
+        tokenizer,
+        args.max_sequence_length,
+    )
 
     training, testing = random_split(dataset, (1.0 - args.eval_ratio, args.eval_ratio))
 
@@ -134,6 +143,11 @@ def main():
     for param in model.esm.parameters():
         param.requires_grad = False
 
+    # Unfreeze the last two layers of the encoder.
+    for module in model.esm.encoder.layer[-2:]:
+        for param in module.parameters():
+            param.requires_grad = True
+
     print("Compiling model ...")
     model = torch.compile(model)
 
@@ -141,6 +155,8 @@ def main():
 
     optimizer = AdamW(model.parameters(), lr=args.learning_rate)
 
+    precision_metric = BinaryPrecision().to(args.device)
+    recall_metric = BinaryRecall().to(args.device)
     f1_metric = BinaryFBetaScore(1.0).to(args.device)
     f2_metric = BinaryFBetaScore(2.0).to(args.device)
 
@@ -224,17 +240,28 @@ def main():
 
                     y_prob = torch.sigmoid(out.logits)
 
+                precision_metric.update(y_prob, y)
+                recall_metric.update(y_prob, y)
                 f1_metric.update(y_prob, y)
                 f2_metric.update(y_prob, y)
 
+            precision_score = precision_metric.compute()
+            recall_score = recall_metric.compute()
             f1_score = f1_metric.compute()
             f2_score = f2_metric.compute()
 
+            logger.add_scalar("Precision", precision_score, epoch)
+            logger.add_scalar("Recall", recall_score, epoch)
             logger.add_scalar("F1 Score", f1_score, epoch)
             logger.add_scalar("F2 Score", f2_score, epoch)
 
-            print(f"F1 Score: {f1_score:.3f}, F2 Score: {f2_score:.3f}")
+            print(
+                f"Precision: {precision_score:.3f}, Recall: {recall_score:.3f}",
+                f"F1 Score: {f1_score:.3f}, F2 Score: {f2_score:.3f}",
+            )
 
+            precision_metric.reset()
+            recall_metric.reset()
             f1_metric.reset()
             f2_metric.reset()
 
@@ -244,6 +271,7 @@ def main():
             checkpoint = {
                 "epoch": epoch,
                 "base_model": args.base_model,
+                "config": config,
                 "model": model.state_dict(),
                 "optimizer": optimizer.state_dict(),
             }

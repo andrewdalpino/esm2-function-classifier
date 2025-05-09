@@ -1,3 +1,5 @@
+from os import path
+
 from datasets import load_dataset
 
 import torch
@@ -8,33 +10,53 @@ from torch.utils.data import Dataset
 
 from transformers import EsmTokenizer
 
-NUM_MF_CLASSES = 12438
-NUM_CC_CLASSES = 4469
-NUM_BP_CLASSES = 30510
-
-TOTAL_NUM_CLASSES = NUM_MF_CLASSES + NUM_CC_CLASSES + NUM_BP_CLASSES
-
 
 class CAFA5(Dataset):
     """
-    The CAFA5 dataset is a collection of protein sequences and their associated
-    functional annotations.
+    The CAFA5 dataset is a collection of protein sequences and their associated gene oncology terms.
+    It is used for training and evaluating models for protein function prediction.
+    The dataset is divided into three subsets based on the type of gene ontology terms:
+    1. Molecular Function (MF)
+    2. Cellular Component (CC)
+    3. Biological Process (BP)
+    Each subset contains a different number of classes, which are defined in the `SUBSET_NUM_CLASSES` dictionary.
+    The dataset is loaded from a JSON file, and each sample contains a protein sequence and its associated labels.
     """
 
+    SUBSET_PATHS = {
+        "molecular-function": "mf_dataset.jsonl",
+        "cellular-component": "cc_dataset.jsonl",
+        "biological-process": "bp_dataset.jsonl",
+    }
+
+    SUBSET_NUM_CLASSES = {
+        "molecular-function": 12438,
+        "cellular-component": 4469,
+        "biological-process": 30510,
+    }
+
     def __init__(
-        self,
-        dataset_path: str,
-        tokenizer: EsmTokenizer,
-        num_classes: int,
-        max_length: int,
+        self, dataset_path: str, subset: str, tokenizer: EsmTokenizer, max_length: int
     ):
         super().__init__()
+
+        if subset not in self.SUBSET_PATHS:
+            raise ValueError(f"Subset '{subset}' is invalid.")
+
+        subset_path = self.SUBSET_PATHS[subset]
+
+        dataset_path = path.join(dataset_path, subset_path)
+
+        if not path.exists(dataset_path):
+            raise FileNotFoundError(
+                f"Dataset file {dataset_path} not found. Please check the path."
+            )
 
         dataset = load_dataset("json", data_files=dataset_path, split="train")
 
         self.dataset = dataset
         self.tokenizer = tokenizer
-        self.num_classes = num_classes
+        self.num_classes = self.SUBSET_NUM_CLASSES[subset]
         self.max_length = max_length
 
     def __getitem__(self, index: int) -> tuple[Tensor, Tensor, Tensor]:

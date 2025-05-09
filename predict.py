@@ -8,8 +8,6 @@ from transformers import AutoTokenizer, EsmConfig, EsmForSequenceClassification
 
 from torch.cuda import is_available as cuda_is_available
 
-from data import CAFA5
-
 
 def main():
     parser = ArgumentParser(
@@ -39,14 +37,7 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(checkpoint["base_model"])
 
-    config = EsmConfig.from_pretrained(checkpoint["base_model"])
-
-    config.problem_type = "multi_label_classification"
-    config.num_labels = CAFA5.NUM_CLASSES
-
-    model = EsmForSequenceClassification.from_pretrained(
-        checkpoint["base_model"], config=config
-    )
+    model = EsmForSequenceClassification(checkpoint["config"])
 
     print("Compiling model ...")
     model = torch.compile(model)
