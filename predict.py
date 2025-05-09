@@ -1,10 +1,13 @@
+import json
 import random
+
+from os import path
 
 from argparse import ArgumentParser
 
 import torch
 
-from transformers import AutoTokenizer, EsmConfig, EsmForSequenceClassification
+from transformers import EsmForSequenceClassification
 
 from torch.cuda import is_available as cuda_is_available
 
@@ -17,10 +20,28 @@ def main():
     parser.add_argument(
         "--checkpoint_path", default="./checkpoints/checkpoint.pt", type=str
     )
+    parser.add_argument(
+        "--label_mapping_path", default="./dataset/all_label_mapping.json", type=str
+    )
+    parser.add_argument("--context_length", default=1024, type=int)
+    parser.add_argument("--top_k", default=10, type=int)
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seed", default=None, type=int)
 
     args = parser.parse_args()
+
+    if not path.exists(args.label_mapping_path):
+        raise FileNotFoundError(
+            f"Label mapping file {args.label_mapping_path} not found. Please check the path."
+        )
+
+    if args.top_k < 1:
+        raise ValueError(f"Top k must be greater than 0, {args.top_k} given.")
+
+    if args.context_length < 1:
+        raise ValueError(
+            f"Context length must be greater than 0, {args.context_length} given."
+        )
 
     if "cuda" in args.device and not cuda_is_available():
         raise RuntimeError("Cuda is not available.")
@@ -31,11 +52,14 @@ def main():
         torch.manual_seed(args.seed)
         random.seed(args.seed)
 
+    with open(args.label_mapping_path, "r") as file:
+        label_mapping = json.load(file)
+
     checkpoint = torch.load(
-        args.checkpoint_path, map_location=args.device, weights_only=True
+        args.checkpoint_path, map_location=args.device, weights_only=False
     )
 
-    tokenizer = AutoTokenizer.from_pretrained(checkpoint["base_model"])
+    tokenizer = checkpoint["tokenizer"]
 
     model = EsmForSequenceClassification(checkpoint["config"])
 
@@ -57,9 +81,7 @@ def main():
 
         out = tokenizer(
             sequence,
-            padding="max_length",
-            padding_side="right",
-            max_length=1024,
+            max_length=args.context_length,
             truncation=True,
         )
 
@@ -80,12 +102,16 @@ def main():
 
             probabilities = torch.sigmoid(logits.squeeze(0))
 
-            sorted, indices = torch.sort(probabilities, descending=True)
+            probabilities, indices = torch.topk(probabilities, args.top_k)
 
-            indices = indices[:10]
-            sorted = sorted[:10]
+            probabilities = probabilities.tolist()
 
-            print(sorted, indices)
+            terms = [label_mapping[index] for index in indices.tolist()]
+
+            print(f"Top {args.top_k} GO Terms:")
+
+            for term, probability in zip(terms, probabilities):
+                print(f"{term}: {probability.item():.4f}")
 
             print("\n")
 

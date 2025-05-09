@@ -24,19 +24,25 @@ class CAFA5(Dataset):
     """
 
     SUBSET_PATHS = {
+        "all": "all_dataset.jsonl",
         "molecular-function": "mf_dataset.jsonl",
         "cellular-component": "cc_dataset.jsonl",
         "biological-process": "bp_dataset.jsonl",
     }
 
     SUBSET_NUM_CLASSES = {
+        "all": 47417,
         "molecular-function": 12438,
         "cellular-component": 4469,
         "biological-process": 30510,
     }
 
     def __init__(
-        self, dataset_path: str, subset: str, tokenizer: EsmTokenizer, max_length: int
+        self,
+        dataset_path: str,
+        subset: str,
+        tokenizer: EsmTokenizer,
+        context_length: int,
     ):
         super().__init__()
 
@@ -57,7 +63,7 @@ class CAFA5(Dataset):
         self.dataset = dataset
         self.tokenizer = tokenizer
         self.num_classes = self.SUBSET_NUM_CLASSES[subset]
-        self.max_length = max_length
+        self.context_length = context_length
 
     def __getitem__(self, index: int) -> tuple[Tensor, Tensor, Tensor]:
         sample = self.dataset[index]
@@ -66,27 +72,27 @@ class CAFA5(Dataset):
             sample["sequence"],
             padding="max_length",
             padding_side="right",
-            max_length=self.max_length,
+            max_length=self.context_length,
             truncation=True,
         )
 
-        tokens = out["input_ids"]
         attn_mask = out["attention_mask"]
+        tokens = out["input_ids"]
 
         labels = [0.0] * self.num_classes
 
         for label_index in sample["label_indices"]:
             labels[label_index] = 1.0
 
+        attn_mask = torch.tensor(attn_mask, dtype=torch.int64)
+
         x = torch.tensor(tokens, dtype=torch.int64)
         y = torch.tensor(labels, dtype=torch.float32)
 
-        attn_mask = torch.tensor(attn_mask, dtype=torch.int64)
+        assert attn_mask.size(0) == self.context_length
 
-        assert x.size(0) == self.max_length
+        assert x.size(0) == self.context_length
         assert y.size(0) == self.num_classes
-
-        assert attn_mask.size(0) == self.max_length
 
         return x, y, attn_mask
 

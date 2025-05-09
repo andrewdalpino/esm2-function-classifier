@@ -15,7 +15,7 @@ from torch.amp import autocast
 from torch.utils.data import random_split
 from torch.nn.utils import clip_grad_norm_
 
-from torchmetrics.classification import BinaryFBetaScore, BinaryPrecision, BinaryRecall
+from torchmetrics.classification import BinaryPrecision, BinaryRecall
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -33,6 +33,8 @@ AVAILABLE_BASE_MODELS = {
     "facebook/esm2_t48_15B_UR50D",
 }
 
+AVAILABLE_SUBSETS = CAFA5.SUBSET_PATHS.keys()
+
 
 def main():
     parser = ArgumentParser(
@@ -45,14 +47,14 @@ def main():
         choices=AVAILABLE_BASE_MODELS,
     )
     parser.add_argument("--dataset_path", default="./dataset", type=str)
-    parser.add_argument("--dataset_subset", default="cellular-component", type=str)
-    parser.add_argument("--max_sequence_length", default=1024, type=int)
+    parser.add_argument("--dataset_subset", default="all", choices=AVAILABLE_SUBSETS)
     parser.add_argument("--num_dataset_processes", default=1, type=int)
-    parser.add_argument("--learning_rate", default=1e-5, type=float)
+    parser.add_argument("--context_length", default=1024, type=int)
+    parser.add_argument("--learning_rate", default=1e-4, type=float)
     parser.add_argument("--max_gradient_norm", default=1.0, type=float)
-    parser.add_argument("--batch_size", default=32, type=int)
-    parser.add_argument("--gradient_accumulation_steps", default=2, type=int)
-    parser.add_argument("--num_epochs", default=3, type=int)
+    parser.add_argument("--batch_size", default=8, type=int)
+    parser.add_argument("--gradient_accumulation_steps", default=8, type=int)
+    parser.add_argument("--num_epochs", default=4, type=int)
     parser.add_argument("--eval_interval", default=1, type=int)
     parser.add_argument("--eval_ratio", default=0.1, type=float)
     parser.add_argument("--checkpoint_interval", default=1, type=int)
@@ -117,7 +119,7 @@ def main():
         args.dataset_path,
         args.dataset_subset,
         tokenizer,
-        args.max_sequence_length,
+        args.context_length,
     )
 
     training, testing = random_split(dataset, (1.0 - args.eval_ratio, args.eval_ratio))
@@ -157,14 +159,12 @@ def main():
 
     precision_metric = BinaryPrecision().to(args.device)
     recall_metric = BinaryRecall().to(args.device)
-    f1_metric = BinaryFBetaScore(1.0).to(args.device)
-    f2_metric = BinaryFBetaScore(2.0).to(args.device)
 
     starting_epoch = 1
 
     if args.resume:
         checkpoint = torch.load(
-            args.checkpoint_path, map_location=args.device, weights_only=True
+            args.checkpoint_path, map_location=args.device, weights_only=False
         )
 
         model.load_state_dict(checkpoint["model"])
@@ -242,35 +242,24 @@ def main():
 
                 precision_metric.update(y_prob, y)
                 recall_metric.update(y_prob, y)
-                f1_metric.update(y_prob, y)
-                f2_metric.update(y_prob, y)
 
             precision_score = precision_metric.compute()
             recall_score = recall_metric.compute()
-            f1_score = f1_metric.compute()
-            f2_score = f2_metric.compute()
 
             logger.add_scalar("Precision", precision_score, epoch)
             logger.add_scalar("Recall", recall_score, epoch)
-            logger.add_scalar("F1 Score", f1_score, epoch)
-            logger.add_scalar("F2 Score", f2_score, epoch)
 
-            print(
-                f"Precision: {precision_score:.3f}, Recall: {recall_score:.3f}",
-                f"F1 Score: {f1_score:.3f}, F2 Score: {f2_score:.3f}",
-            )
+            print(f"Precision: {precision_score:.3f}, Recall: {recall_score:.3f}")
 
             precision_metric.reset()
             recall_metric.reset()
-            f1_metric.reset()
-            f2_metric.reset()
 
             model.train()
 
         if epoch % args.checkpoint_interval == 0:
             checkpoint = {
                 "epoch": epoch,
-                "base_model": args.base_model,
+                "tokenizer": tokenizer,
                 "config": config,
                 "model": model.state_dict(),
                 "optimizer": optimizer.state_dict(),
