@@ -37,14 +37,14 @@ def main():
         raise FileNotFoundError(
             f"Label mapping file {args.label_mapping_path} not found. Please check the path."
         )
-
-    if args.top_k < 1:
-        raise ValueError(f"Top k must be greater than 0, {args.top_k} given.")
-
+    
     if args.context_length < 1:
         raise ValueError(
             f"Context length must be greater than 0, {args.context_length} given."
         )
+
+    if args.top_k < 1:
+        raise ValueError(f"Top k must be greater than 0, {args.top_k} given.")
 
     if "cuda" in args.device and not cuda_is_available():
         raise RuntimeError("Cuda is not available.")
