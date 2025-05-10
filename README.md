@@ -90,7 +90,16 @@ You will be asked to enter a protein sequence to predict like in the example bel
 ```sh
 Checkpoint loaded successfully
 Enter a sequence: MASMAGVGGGSGKRVPPTRVWWRLYEFALGLLGVVFFAAAATSGKTSRLVSVLIG...
+
+Top 20 GO Terms:
+0.6195: cellular anatomical entity
+0.5855: cellular_component
+0.4599: cell periphery
+0.4597: membrane
+0.3749: plasma membrane
+...
 ```
+
 
 ### Prediction Arguments
 
@@ -98,6 +107,7 @@ Enter a sequence: MASMAGVGGGSGKRVPPTRVWWRLYEFALGLLGVVFFAAAATSGKTSRLVSVLIG...
 |---|---|---|---|
 | --checkpoint_path | "./checkpoints/checkpoint.pt" | str | The path to the training checkpoint. |
 | --label_mapping_path | "./dataset/all_label_mapping.json" | str | The path to the label index to GO term mapping file. |
+| --go_obo_path | "./dataset/train/go-basic.obo" | str | The path to the gene ontology obo file. |
 | --context_length | 1024 | int | The maximum length of the input sequences. |
 | --top_k | 10 | int | The top k GO terms and their probabilities to output as predictions. |
 | --device | "cuda" | str | The device to run the computation on ("cuda", "cuda:1", "mps", "cpu", etc). |

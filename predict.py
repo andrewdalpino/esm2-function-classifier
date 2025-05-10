@@ -55,11 +55,6 @@ def main():
         torch.manual_seed(args.seed)
         random.seed(args.seed)
 
-    with open(args.label_mapping_path, "r") as file:
-        label_mapping = json.load(file)
-
-    go_interpreter = GOInterpreter(args.go_obo_path)
-
     checkpoint = torch.load(
         args.checkpoint_path, map_location="cpu", weights_only=False
     )
@@ -75,9 +70,14 @@ def main():
 
     model.load_state_dict(checkpoint["model"])
 
+    model.eval()
+
     print("Checkpoint loaded successfully.")
 
-    model.eval()
+    with open(args.label_mapping_path, "r") as file:
+        label_mapping = json.load(file)
+
+    go_interpreter = GOInterpreter(args.go_obo_path)
 
     while True:
         sequence = input("Enter a sequence: ").replace(" ", "").replace("\n", "")
