@@ -1,4 +1,4 @@
-import obonet
+from obonet import read_obo
 
 from networkx import is_directed_acyclic_graph
 
@@ -6,7 +6,7 @@ class GOInterpreter:
     """Class to interpret Gene Ontology (GO) terms and their relationships."""
 
     def __init__(self, obo_path: str):
-        graph = obonet.read_obo(obo_path)
+        graph = read_obo(obo_path)
 
         if not is_directed_acyclic_graph(graph):
             raise ValueError("Invalid gene ontology network.")
