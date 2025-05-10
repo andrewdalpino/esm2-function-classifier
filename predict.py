@@ -11,6 +11,8 @@ from transformers import EsmForSequenceClassification
 
 from torch.cuda import is_available as cuda_is_available
 
+from graph import GOInterpreter
+
 
 def main():
     parser = ArgumentParser(
@@ -23,6 +25,7 @@ def main():
     parser.add_argument(
         "--label_mapping_path", default="./dataset/all_label_mapping.json", type=str
     )
+    parser.add_argument("--go_obo_path", default="./dataset/train/go-basic.obo", type=str)
     parser.add_argument("--context_length", default=1024, type=int)
     parser.add_argument("--top_k", default=10, type=int)
     parser.add_argument("--device", default="cuda", type=str)
@@ -55,8 +58,10 @@ def main():
     with open(args.label_mapping_path, "r") as file:
         label_mapping = json.load(file)
 
+    go_interpreter = GOInterpreter(args.go_obo_path)
+
     checkpoint = torch.load(
-        args.checkpoint_path, map_location=args.device, weights_only=False
+        args.checkpoint_path, map_location="cpu", weights_only=False
     )
 
     tokenizer = checkpoint["tokenizer"]
@@ -75,9 +80,7 @@ def main():
     model.eval()
 
     while True:
-        sequence = input("Enter a sequence: ")
-
-        sequence = sequence.replace(" ", "").replace("\n", "")
+        sequence = input("Enter a sequence: ").replace(" ", "").replace("\n", "")
 
         out = tokenizer(
             sequence,
@@ -106,12 +109,14 @@ def main():
 
             probabilities = probabilities.tolist()
 
-            terms = [label_mapping[index] for index in indices.tolist()]
+            go_terms = [label_mapping[index] for index in indices.tolist()]
+
+            names = go_interpreter.get_names(go_terms)
 
             print(f"Top {args.top_k} GO Terms:")
 
-            for term, probability in zip(terms, probabilities):
-                print(f"{term}: {probability:.4f}")
+            for name, probability in zip(names, probabilities):
+                print(f"{probability:.4f}: {name}")
 
             print("\n")
 
