@@ -111,7 +111,7 @@ def main():
             print(f"Top {args.top_k} GO Terms:")
 
             for term, probability in zip(terms, probabilities):
-                print(f"{term}: {probability.item():.4f}")
+                print(f"{term}: {probability:.4f}")
 
             print("\n")
 

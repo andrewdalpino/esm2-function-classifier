@@ -108,6 +108,8 @@ Enter a sequence: MASMAGVGGGSGKRVPPTRVWWRLYEFALGLLGVVFFAAAATSGKTSRLVSVLIGGLRRDFG
 
 >- Z. Lin, et al. Evolutionary-scale prediction of atomic level protein structure with a language model. 2022.
 >- G. A. Merino, et al. Hierarchical deep learning for predicting GO annotations by integrating protein knowledge. 2022.
+>- J. Su, et al. ZLPR: A Novel Loss for Multi-label Classification. 2022.
+>- I. Friedberg, et al. CAFA 5 Protein Function Prediction. https://kaggle.com/competitions/cafa-5-protein-function-prediction, 2023.
 >- D. Chen, et al. Endowing Protein Language Models with Structural Knowledge. 2024.
 >- S. Jiao, et al. Beyond ESM2: Graph-Enhanced Protein Sequence Modeling with Efficient Clustering. 2024.
 >- G. B. de Oliveira, et al. Scaling Up ESM2 Architectures for Long Protein Sequences Analysis: Long and Quantized Approaches. 2025.
