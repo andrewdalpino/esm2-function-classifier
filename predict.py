@@ -34,14 +34,14 @@ def main():
         raise FileNotFoundError(
             f"Label mapping file {args.label_mapping_path} not found. Please check the path."
         )
-
-    if args.top_k < 1:
-        raise ValueError(f"Top k must be greater than 0, {args.top_k} given.")
-
+    
     if args.context_length < 1:
         raise ValueError(
             f"Context length must be greater than 0, {args.context_length} given."
         )
+
+    if args.top_k < 1:
+        raise ValueError(f"Top k must be greater than 0, {args.top_k} given.")
 
     if "cuda" in args.device and not cuda_is_available():
         raise RuntimeError("Cuda is not available.")
@@ -56,7 +56,7 @@ def main():
         label_mapping = json.load(file)
 
     checkpoint = torch.load(
-        args.checkpoint_path, map_location=args.device, weights_only=False
+        args.checkpoint_path, map_location="cpu", weights_only=False
     )
 
     tokenizer = checkpoint["tokenizer"]
@@ -75,9 +75,7 @@ def main():
     model.eval()
 
     while True:
-        sequence = input("Enter a sequence: ")
-
-        sequence = sequence.replace(" ", "").replace("\n", "")
+        sequence = input("Enter a sequence: ").replace(" ", "").replace("\n", "")
 
         out = tokenizer(
             sequence,
