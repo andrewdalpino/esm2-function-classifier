@@ -50,16 +50,16 @@ python fine-tune.py --checkpoint_path="./checkpoints/checkpoint.pt" --resume
 
 | Argument | Default | Type | Description |
 |---|---|---|---|
-| --base_model | "facebook/esm2_t6_8M_UR50D" | str | The base model name., choose from `facebook/esm2_t6_8M_UR50D`, `facebook/esm2_t12_35M_UR50D`, `facebook/esm2_t30_150M_UR50D`, `facebook/esm2_t33_650M_UR50D`, `facebook/esm2_t36_3B_UR50D`, or `facebook/esm2_t48_15B_UR50D`. |
+| --base_model | "facebook/esm2_t6_8M_UR50D" | str | The base model name, choose from `facebook/esm2_t6_8M_UR50D`, `facebook/esm2_t12_35M_UR50D`, `facebook/esm2_t30_150M_UR50D`, `facebook/esm2_t33_650M_UR50D`, `facebook/esm2_t36_3B_UR50D`, or `facebook/esm2_t48_15B_UR50D`. |
 | --dataset_path | "./dataset" | str | The path to the dataset files. |
-| --dataset_subset | "all" | str | The subset of the dataset to train on - choose from `all`, `molecular-function`, `cellular-composition`, or `biological-process`. |
+| --dataset_subset | "all" | str | The subset of the dataset to train on, choose from `all`, `molecular-function`, `cellular-composition`, or `biological-process`. |
 | --num_dataset_processes | 1 | int | The number of CPU processes to use to process and load samples. |
 | --context_length | 1024 | int | The maximum length of the input sequences. |
-| --batch_size | 8 | int | The number of samples to pass through the network at a time. |
-| --gradient_accumulation_steps | 8 | int | The number of batches to pass through the network before updating the weights. |
+| --batch_size | 16 | int | The number of samples to pass through the network at a time. |
+| --gradient_accumulation_steps | 4 | int | The number of batches to pass through the network before updating the weights. |
 | --max_gradient_norm | 1.0 | float | Clip gradients above this threshold norm before stepping. |
 | --learning_rate | 1e-4 | float | The learning rate of the Adam optimizer. |
-| --num_epochs | 4 | int | The number of epochs to train for. |
+| --num_epochs | 10 | int | The number of epochs to train for. |
 | --eval_interval | 1 | int | Evaluate the model after this many epochs on the testing set. |
 | --eval_ratio | 0.1 | float | The proportion of testing samples to validate the model on. |
 | --checkpoint_interval | 1 | int | Save the model parameters to disk every this many epochs. |

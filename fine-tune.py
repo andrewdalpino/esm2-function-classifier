@@ -6,9 +6,6 @@ from functools import partial
 import torch
 
 from torch.optim import AdamW
-
-from transformers import EsmTokenizer, EsmConfig, EsmForSequenceClassification
-
 from torch.utils.data import DataLoader
 from torch.cuda import is_available as cuda_is_available, is_bf16_supported
 from torch.amp import autocast
@@ -18,6 +15,8 @@ from torch.nn.utils import clip_grad_norm_
 from torchmetrics.classification import BinaryPrecision, BinaryRecall
 
 from torch.utils.tensorboard import SummaryWriter
+
+from transformers import EsmTokenizer, EsmConfig, EsmForSequenceClassification
 
 from data import CAFA5
 
@@ -52,9 +51,9 @@ def main():
     parser.add_argument("--context_length", default=1024, type=int)
     parser.add_argument("--learning_rate", default=1e-4, type=float)
     parser.add_argument("--max_gradient_norm", default=1.0, type=float)
-    parser.add_argument("--batch_size", default=8, type=int)
-    parser.add_argument("--gradient_accumulation_steps", default=8, type=int)
-    parser.add_argument("--num_epochs", default=4, type=int)
+    parser.add_argument("--batch_size", default=16, type=int)
+    parser.add_argument("--gradient_accumulation_steps", default=4, type=int)
+    parser.add_argument("--num_epochs", default=10, type=int)
     parser.add_argument("--eval_interval", default=1, type=int)
     parser.add_argument("--eval_ratio", default=0.1, type=float)
     parser.add_argument("--checkpoint_interval", default=1, type=int)
@@ -131,7 +130,7 @@ def main():
         num_workers=args.num_dataset_processes,
     )
 
-    train_loader = new_dataloader(training, shuffle=True, drop_last=True)
+    train_loader = new_dataloader(training, shuffle=True)
     test_loader = new_dataloader(testing, shuffle=False)
 
     config = EsmConfig.from_pretrained(args.base_model)
