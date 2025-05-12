@@ -1,16 +1,22 @@
+from os import path
+
 from obonet import read_obo
 
 from networkx import is_directed_acyclic_graph
+
 
 class GOInterpreter:
     """Class to interpret Gene Ontology (GO) terms and their relationships."""
 
     def __init__(self, obo_path: str):
+        if not path.exists(obo_path):
+            raise FileNotFoundError(f"File '{obo_path}' does not exist.")
+
         graph = read_obo(obo_path)
 
         if not is_directed_acyclic_graph(graph):
             raise ValueError("Invalid gene ontology network.")
-        
+
         self.graph = graph
 
     def get_names(self, go_terms: list[str]) -> list[str]:

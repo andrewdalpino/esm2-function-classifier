@@ -1,6 +1,6 @@
-# ESM Protein Function Caller
+# ESM2 Protein Function Caller
 
-An Evolutionary-scale Model (ESM) for protein function calling from amino acid sequences.
+An Evolutionary-scale Model (ESM) for protein function calling from protein sequences. Based on the ESM2 architecture and fine-tuned on the CAFA5 dataset, this model predicts the gene oncology (GO) subgraph for a particular amino acid sequence - giving you insight into the protein's cellular composition, molecular function, and biological processes.
 
 ## Install Project Dependencies
 
@@ -51,10 +51,10 @@ python fine-tune.py --checkpoint_path="./checkpoints/checkpoint.pt" --resume
 | Argument | Default | Type | Description |
 |---|---|---|---|
 | --base_model | "facebook/esm2_t6_8M_UR50D" | str | The base model name, choose from `facebook/esm2_t6_8M_UR50D`, `facebook/esm2_t12_35M_UR50D`, `facebook/esm2_t30_150M_UR50D`, `facebook/esm2_t33_650M_UR50D`, `facebook/esm2_t36_3B_UR50D`, or `facebook/esm2_t48_15B_UR50D`. |
-| --dataset_path | "./dataset" | str | The path to the dataset files. |
-| --dataset_subset | "all" | str | The subset of the dataset to train on, choose from `all`, `molecular-function`, `cellular-composition`, or `biological-process`. |
+| --dataset_subset | "all" | str | The subset of the dataset to train on, choose from `all`, `mf` for molecular function, `cc` for cellular composition, or `bp` for biological process. |
 | --num_dataset_processes | 1 | int | The number of CPU processes to use to process and load samples. |
 | --context_length | 1024 | int | The maximum length of the input sequences. |
+| --unfreeze_last_k_layers | 2 | int | Fine-tune the last k layers of the pretrained encoder. |
 | --batch_size | 16 | int | The number of samples to pass through the network at a time. |
 | --gradient_accumulation_steps | 4 | int | The number of batches to pass through the network before updating the weights. |
 | --max_gradient_norm | 1.0 | float | Clip gradients above this threshold norm before stepping. |
@@ -82,7 +82,7 @@ tensorboard --logdir=./runs
 We provide a prediction script for sampling the top k GO terms inferred by the model. Make sure to point the script at the correct label mapping file for it to translate the predicted label indices to their corresponding GO terms.
 
 ```sh
-python predict.py --checkpoint_path="./checkpoints/checkpoint.pt" --top_k=20  --label_mapping_path="./dataset/bp_label_mapping.json"
+python predict.py --checkpoint_path="./checkpoints/checkpoint.pt" --top_k=5
 ```
 
 You will be asked to enter a protein sequence to predict like in the example below.
@@ -91,7 +91,7 @@ You will be asked to enter a protein sequence to predict like in the example bel
 Checkpoint loaded successfully
 Enter a sequence: MASMAGVGGGSGKRVPPTRVWWRLYEFALGLLGVVFFAAAATSGKTSRLVSVLIG...
 
-Top 20 GO Terms:
+Top 5 GO Terms:
 0.6195: cellular anatomical entity
 0.5855: cellular_component
 0.4599: cell periphery
@@ -106,7 +106,6 @@ Top 20 GO Terms:
 | Argument | Default | Type | Description |
 |---|---|---|---|
 | --checkpoint_path | "./checkpoints/checkpoint.pt" | str | The path to the training checkpoint. |
-| --label_mapping_path | "./dataset/all_label_mapping.json" | str | The path to the label index to GO term mapping file. |
 | --go_obo_path | "./dataset/train/go-basic.obo" | str | The path to the gene ontology obo file. |
 | --context_length | 1024 | int | The maximum length of the input sequences. |
 | --top_k | 10 | int | The top k GO terms and their probabilities to output as predictions. |

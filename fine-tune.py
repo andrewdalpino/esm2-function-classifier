@@ -32,8 +32,6 @@ AVAILABLE_BASE_MODELS = {
     "facebook/esm2_t48_15B_UR50D",
 }
 
-AVAILABLE_SUBSETS = CAFA5.SUBSET_PATHS.keys()
-
 
 def main():
     parser = ArgumentParser(
@@ -45,10 +43,12 @@ def main():
         default="facebook/esm2_t6_8M_UR50D",
         choices=AVAILABLE_BASE_MODELS,
     )
-    parser.add_argument("--dataset_path", default="./dataset", type=str)
-    parser.add_argument("--dataset_subset", default="all", choices=AVAILABLE_SUBSETS)
+    parser.add_argument(
+        "--dataset_subset", default="all", choices=CAFA5.AVAILABLE_SUBSETS
+    )
     parser.add_argument("--num_dataset_processes", default=1, type=int)
     parser.add_argument("--context_length", default=1024, type=int)
+    parser.add_argument("--unfreeze_last_k_layers", default=2, type=int)
     parser.add_argument("--learning_rate", default=5e-4, type=float)
     parser.add_argument("--max_gradient_norm", default=1.0, type=float)
     parser.add_argument("--batch_size", default=16, type=int)
@@ -115,7 +115,6 @@ def main():
     tokenizer = EsmTokenizer.from_pretrained(args.base_model)
 
     dataset = CAFA5(
-        args.dataset_path,
         args.dataset_subset,
         tokenizer,
         args.context_length,
@@ -144,8 +143,8 @@ def main():
     for param in model.esm.parameters():
         param.requires_grad = False
 
-    # Unfreeze the last two layers of the encoder.
-    for module in model.esm.encoder.layer[-2:]:
+    # Unfreeze the last k layers of the encoder.
+    for module in model.esm.encoder.layer[args.unfreeze_last_k_layers:]:
         for param in module.parameters():
             param.requires_grad = True
 
@@ -168,6 +167,8 @@ def main():
 
         model.load_state_dict(checkpoint["model"])
         optimizer.load_state_dict(checkpoint["optimizer"])
+
+        dataset.terms_to_label_indices = checkpoint["terms_to_label_indices"]
 
         starting_epoch += checkpoint["epoch"]
 
@@ -259,6 +260,7 @@ def main():
             checkpoint = {
                 "epoch": epoch,
                 "tokenizer": tokenizer,
+                "terms_to_label_indices": dataset.terms_to_label_indices,
                 "config": config,
                 "model": model.state_dict(),
                 "optimizer": optimizer.state_dict(),

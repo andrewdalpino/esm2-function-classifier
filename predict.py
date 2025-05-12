@@ -22,10 +22,7 @@ def main():
     parser.add_argument(
         "--checkpoint_path", default="./checkpoints/checkpoint.pt", type=str
     )
-    parser.add_argument(
-        "--label_mapping_path", default="./dataset/all_label_mapping.json", type=str
-    )
-    parser.add_argument("--go_obo_path", default="./dataset/train/go-basic.obo", type=str)
+    parser.add_argument("--go_obo_path", default="./dataset/go-basic.obo", type=str)
     parser.add_argument("--context_length", default=1024, type=int)
     parser.add_argument("--top_k", default=10, type=int)
     parser.add_argument("--device", default="cuda", type=str)
@@ -33,11 +30,6 @@ def main():
 
     args = parser.parse_args()
 
-    if not path.exists(args.label_mapping_path):
-        raise FileNotFoundError(
-            f"Label mapping file {args.label_mapping_path} not found. Please check the path."
-        )
-    
     if args.context_length < 1:
         raise ValueError(
             f"Context length must be greater than 0, {args.context_length} given."
@@ -74,8 +66,11 @@ def main():
 
     print("Checkpoint loaded successfully.")
 
-    with open(args.label_mapping_path, "r") as file:
-        label_mapping = json.load(file)
+    terms_to_label_indices = checkpoint["terms_to_label_indices"]
+
+    label_indices_to_terms = {
+        index: term for term, index in terms_to_label_indices.items()
+    }
 
     go_interpreter = GOInterpreter(args.go_obo_path)
 
@@ -101,17 +96,15 @@ def main():
         with torch.no_grad():
             outputs = model.forward(input_ids, attention_mask=attn_mask)
 
-            logits = outputs.logits
-
-            probabilities = torch.sigmoid(logits.squeeze(0))
+            probabilities = torch.sigmoid(outputs.logits.squeeze(0))
 
             probabilities, indices = torch.topk(probabilities, args.top_k)
 
             probabilities = probabilities.tolist()
 
-            go_terms = [label_mapping[index] for index in indices.tolist()]
+            terms = [label_indices_to_terms[index] for index in indices.tolist()]
 
-            names = go_interpreter.get_names(go_terms)
+            names = go_interpreter.get_names(terms)
 
             print(f"Top {args.top_k} GO Terms:")
 
