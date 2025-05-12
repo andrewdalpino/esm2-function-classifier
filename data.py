@@ -1,5 +1,3 @@
-from os import path
-
 from datasets import load_dataset
 
 import torch
