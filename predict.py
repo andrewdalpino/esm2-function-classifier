@@ -19,10 +19,10 @@ def main():
         description="Predict the gene ontology terms associated with a protein sequence."
     )
 
+    parser.add_argument("--go_obo_path", default="./dataset/go-basic.obo", type=str)
     parser.add_argument(
         "--checkpoint_path", default="./checkpoints/checkpoint.pt", type=str
     )
-    parser.add_argument("--go_obo_path", default="./dataset/go-basic.obo", type=str)
     parser.add_argument("--context_length", default=1024, type=int)
     parser.add_argument("--top_k", default=10, type=int)
     parser.add_argument("--device", default="cuda", type=str)

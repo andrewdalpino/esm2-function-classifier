@@ -144,7 +144,7 @@ def main():
         param.requires_grad = False
 
     # Unfreeze the last k layers of the encoder.
-    for module in model.esm.encoder.layer[args.unfreeze_last_k_layers:]:
+    for module in model.esm.encoder.layer[-args.unfreeze_last_k_layers :]:
         for param in module.parameters():
             param.requires_grad = True
 
