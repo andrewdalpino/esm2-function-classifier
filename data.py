@@ -48,8 +48,6 @@ class CAFA5(Dataset):
 
                     label_index += 1
 
-        terms_to_label_indices = dict(sorted(terms_to_label_indices.items()))
-
         num_classes = len(terms_to_label_indices)
 
         self.dataset = dataset
