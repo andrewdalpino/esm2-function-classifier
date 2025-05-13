@@ -1,7 +1,4 @@
-import json
 import random
-
-from os import path
 
 from argparse import ArgumentParser
 
@@ -53,7 +50,9 @@ def main():
 
     tokenizer = checkpoint["tokenizer"]
 
-    model = EsmForSequenceClassification(checkpoint["config"])
+    config = checkpoint["config"]
+
+    model = EsmForSequenceClassification(config)
 
     print("Compiling model ...")
     model = torch.compile(model)
@@ -65,12 +64,6 @@ def main():
     model.eval()
 
     print("Checkpoint loaded successfully.")
-
-    terms_to_label_indices = checkpoint["terms_to_label_indices"]
-
-    label_indices_to_terms = {
-        index: term for term, index in terms_to_label_indices.items()
-    }
 
     go_interpreter = GOInterpreter(args.go_obo_path)
 
@@ -102,7 +95,7 @@ def main():
 
             probabilities = probabilities.tolist()
 
-            terms = [label_indices_to_terms[index] for index in indices.tolist()]
+            terms = [config.id2label[index] for index in indices.tolist()]
 
             names = go_interpreter.get_names(terms)
 

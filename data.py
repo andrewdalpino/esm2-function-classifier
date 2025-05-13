@@ -58,6 +58,14 @@ class CAFA5(Dataset):
         self.terms_to_label_indices = terms_to_label_indices
         self.num_classes = num_classes
 
+    @property
+    def label_indices_to_terms(self):
+        """
+        Returns a dictionary mapping label indices to their corresponding gene ontology terms.
+        """
+
+        return {index: term for term, index in self.terms_to_label_indices.items()}
+
     def __getitem__(self, index: int) -> tuple[Tensor, Tensor, Tensor]:
         sample = self.dataset[index]
 

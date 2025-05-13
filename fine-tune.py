@@ -135,6 +135,8 @@ def main():
     config = EsmConfig.from_pretrained(args.base_model)
 
     config.problem_type = "multi_label_classification"
+    config.label2id = dataset.terms_to_label_indices
+    config.id2label = dataset.label_indices_to_terms
     config.num_labels = dataset.num_classes
 
     model = EsmForSequenceClassification.from_pretrained(args.base_model, config=config)
@@ -260,7 +262,6 @@ def main():
             checkpoint = {
                 "epoch": epoch,
                 "tokenizer": tokenizer,
-                "terms_to_label_indices": dataset.terms_to_label_indices,
                 "config": config,
                 "model": model.state_dict(),
                 "optimizer": optimizer.state_dict(),
