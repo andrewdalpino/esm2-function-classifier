@@ -170,8 +170,6 @@ def main():
         model.load_state_dict(checkpoint["model"])
         optimizer.load_state_dict(checkpoint["optimizer"])
 
-        dataset.terms_to_label_indices = checkpoint["terms_to_label_indices"]
-
         starting_epoch += checkpoint["epoch"]
 
         print("Previous checkpoint resumed successfully")
