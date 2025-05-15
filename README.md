@@ -1,6 +1,6 @@
 # ESM2 Protein Function Caller
 
-An Evolutionary-scale Model (ESM) for protein function calling from protein sequences. Based on the ESM2 architecture and fine-tuned on the [CAFA 5](https://huggingface.co/datasets/andrewdalpino/CAFA5) dataset, this model predicts the gene oncology (GO) subgraph for a particular amino acid sequence - giving you insight into the protein's cellular composition, molecular function, and biological processes. An additional model predicts the taxonomy of the protein from amino acid sequences.
+An Evolutionary-scale Model (ESM) for protein function calling from protein sequences. Based on the ESM2 architecture and fine-tuned on the [CAFA 5](https://huggingface.co/datasets/andrewdalpino/CAFA5) dataset, this model predicts the gene oncology (GO) subgraph for a particular amino acid sequence - giving you insight into the protein's cellular component, molecular function, and biological processes. An additional model predicts the taxonomy of the protein from amino acid sequences.
 
 ## Install Project Dependencies
 
@@ -55,7 +55,7 @@ python train-go-terms.py --checkpoint_path="./checkpoints/checkpoint.pt" --resum
 | Argument | Default | Type | Description |
 |---|---|---|---|
 | --base_model | "facebook/esm2_t6_8M_UR50D" | str | The base model name, choose from `facebook/esm2_t6_8M_UR50D`, `facebook/esm2_t12_35M_UR50D`, `facebook/esm2_t30_150M_UR50D`, `facebook/esm2_t33_650M_UR50D`, `facebook/esm2_t36_3B_UR50D`, or `facebook/esm2_t48_15B_UR50D`. |
-| --dataset_subset | "all" | str | The subset of the dataset to train on, choose from `all`, `mf` for molecular function, `cc` for cellular composition, or `bp` for biological process. |
+| --dataset_subset | "all" | str | The subset of the dataset to train on, choose from `all`, `mf` for molecular function, `cc` for cellular component, or `bp` for biological process. |
 | --num_dataset_processes | 1 | int | The number of CPU processes to use to process and load samples. |
 | --context_length | 1024 | int | The maximum length of the input sequences. |
 | --unfreeze_last_k_layers | 0 | int | Fine-tune the last k layers of the pre-trained encoder. |
