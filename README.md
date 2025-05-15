@@ -1,6 +1,6 @@
 # ESM2 Protein Function Caller
 
-An Evolutionary-scale Model (ESM) for protein function calling from protein sequences. Based on the ESM2 architecture and fine-tuned on the [CAFA 5](https://huggingface.co/datasets/andrewdalpino/CAFA5) dataset, this model predicts the gene oncology (GO) subgraph for a particular amino acid sequence - giving you insight into the protein's cellular composition, molecular function, and biological processes.
+An Evolutionary-scale Model (ESM) for protein function calling from protein sequences. Based on the ESM2 architecture and fine-tuned on the [CAFA 5](https://huggingface.co/datasets/andrewdalpino/CAFA5) dataset, this model predicts the gene oncology (GO) subgraph for a particular amino acid sequence - giving you insight into the protein's cellular composition, molecular function, and biological processes. An additional model predicts the taxonomy of the protein from amino acid sequences.
 
 ## Install Project Dependencies
 
@@ -75,7 +75,33 @@ python train-go-terms.py --checkpoint_path="./checkpoints/checkpoint.pt" --resum
 
 ### Taxonomy Training
 
-Coming soon ...
+The next training objective we'll focus on is taxonomy prediction using the same base ESM model and CAFA 5 training set. For this objective, we'll fine-tune a model to predict the NCBI taxon ID of the protein sequence. To start training with the default arguments, enter the command like in the example below.
+
+```sh
+python train-taxonomy.py
+```
+
+### Taxonomy Training Arguments
+
+| Argument | Default | Type | Description |
+|---|---|---|---|
+| --base_model | "facebook/esm2_t6_8M_UR50D" | str | The base model name, choose from `facebook/esm2_t6_8M_UR50D`, `facebook/esm2_t12_35M_UR50D`, `facebook/esm2_t30_150M_UR50D`, `facebook/esm2_t33_650M_UR50D`, `facebook/esm2_t36_3B_UR50D`, or `facebook/esm2_t48_15B_UR50D`. |
+| --num_dataset_processes | 1 | int | The number of CPU processes to use to process and load samples. |
+| --context_length | 1024 | int | The maximum length of the input sequences. |
+| --unfreeze_last_k_layers | 0 | int | Fine-tune the last k layers of the pre-trained encoder. |
+| --batch_size | 16 | int | The number of samples to pass through the network at a time. |
+| --gradient_accumulation_steps | 4 | int | The number of batches to pass through the network before updating the weights. |
+| --max_gradient_norm | 1.0 | float | Clip gradients above this threshold norm before stepping. |
+| --learning_rate | 5e-4 | float | The learning rate of the Adam optimizer. |
+| --num_epochs | 20 | int | The number of epochs to train for. |
+| --eval_interval | 2 | int | Evaluate the model after this many epochs on the testing set. |
+| --eval_ratio | 0.1 | float | The proportion of testing samples to validate the model on. |
+| --checkpoint_interval | 2 | int | Save the model parameters to disk every this many epochs. |
+| --checkpoint_path | "./checkpoints/checkpoint.pt" | string | The path to the training checkpoint. |
+| --resume | False | bool | Should we resume training from the last checkpoint? |
+| --run_dir_path | "./runs/instruction-tune" | str | The path to the TensorBoard run directory for this training session. |
+| --device | "cuda" | str | The device to run the computation on ("cuda", "cuda:1", "mps", "cpu", etc). |
+| --seed | None | int | The seed for the random number generator. |
 
 ## Training Dashboard
 

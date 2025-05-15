@@ -43,9 +43,6 @@ def main():
         default="facebook/esm2_t6_8M_UR50D",
         choices=AVAILABLE_BASE_MODELS,
     )
-    parser.add_argument(
-        "--dataset_subset", default="all", choices=CAFA5Taxonomy.AVAILABLE_SUBSETS
-    )
     parser.add_argument("--num_dataset_processes", default=1, type=int)
     parser.add_argument("--context_length", default=1024, type=int)
     parser.add_argument("--unfreeze_last_k_layers", default=0, type=int)
@@ -114,11 +111,7 @@ def main():
 
     tokenizer = EsmTokenizer.from_pretrained(args.base_model)
 
-    dataset = CAFA5Taxonomy(
-        args.dataset_subset,
-        tokenizer,
-        args.context_length,
-    )
+    dataset = CAFA5Taxonomy(tokenizer, args.context_length)
 
     training, testing = random_split(dataset, (1.0 - args.eval_ratio, args.eval_ratio))
 

@@ -108,20 +108,14 @@ class CAFA5Taxonomy(Dataset):
 
     DATASET_NAME = "andrewdalpino/CAFA5"
 
-    AVAILABLE_SUBSETS = {"all", "mf", "cc", "bp"}
-
     def __init__(
         self,
-        subset: str,
         tokenizer: EsmTokenizer,
         context_length: int,
     ):
         super().__init__()
 
-        if subset not in self.AVAILABLE_SUBSETS:
-            raise ValueError(f"Subset '{subset}' is invalid.")
-
-        dataset = load_dataset(self.DATASET_NAME, subset, split="train")
+        dataset = load_dataset(self.DATASET_NAME, "all", split="train")
 
         taxon_id_to_label_index = {}
 
