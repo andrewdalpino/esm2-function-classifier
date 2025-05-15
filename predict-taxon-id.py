@@ -8,20 +8,16 @@ from transformers import EsmForSequenceClassification
 
 from torch.cuda import is_available as cuda_is_available
 
-from graph import GOInterpreter
-
 
 def main():
     parser = ArgumentParser(
-        description="Predict the gene ontology terms associated with a protein sequence."
+        description="Predict the NCBI taxon ID associated with a protein sequence."
     )
 
     parser.add_argument(
         "--checkpoint_path", default="./checkpoints/checkpoint.pt", type=str
     )
-    parser.add_argument("--go_obo_path", default="./dataset/go-basic.obo", type=str)
     parser.add_argument("--context_length", default=1024, type=int)
-    parser.add_argument("--top_k", default=10, type=int)
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seed", default=None, type=int)
 
@@ -31,9 +27,6 @@ def main():
         raise ValueError(
             f"Context length must be greater than 0, {args.context_length} given."
         )
-
-    if args.top_k < 1:
-        raise ValueError(f"Top k must be greater than 0, {args.top_k} given.")
 
     if "cuda" in args.device and not cuda_is_available():
         raise RuntimeError("Cuda is not available.")
@@ -65,8 +58,6 @@ def main():
 
     print("Checkpoint loaded successfully.")
 
-    go_interpreter = GOInterpreter(args.go_obo_path)
-
     while True:
         sequence = input("Enter a sequence: ").replace(" ", "").replace("\n", "")
 
@@ -89,20 +80,16 @@ def main():
         with torch.no_grad():
             outputs = model.forward(input_ids, attention_mask=attn_mask)
 
-            probabilities = torch.sigmoid(outputs.logits.squeeze(0))
+            probabilities = torch.softmax(outputs.logits.squeeze(0))
 
-            probabilities, indices = torch.topk(probabilities, args.top_k)
+            label_index = torch.argmax(probabilities).item()
 
-            probabilities = probabilities.tolist()
+            probability = probabilities[label_index]
 
-            terms = [config.id2label[index] for index in indices.tolist()]
+            taxon_id = config.id2label[label_index]
 
-            names = go_interpreter.get_names(terms)
-
-            print(f"Top {args.top_k} GO Terms:")
-
-            for term, name, probability in zip(terms, names, probabilities):
-                print(f"{probability:.4f} {term}: {name}")
+            print(f"Taxon ID: {taxon_id}")
+            print(f"Probability: {probability:.4f}")
 
             print("\n")
 

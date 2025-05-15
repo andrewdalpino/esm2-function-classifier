@@ -1,6 +1,6 @@
 # ESM2 Protein Function Caller
 
-An Evolutionary-scale Model (ESM) for protein function calling from protein sequences. Based on the ESM2 architecture and fine-tuned on the CAFA5 dataset, this model predicts the gene oncology (GO) subgraph for a particular amino acid sequence - giving you insight into the protein's cellular composition, molecular function, and biological processes.
+An Evolutionary-scale Model (ESM) for protein function calling from protein sequences. Based on the ESM2 architecture and fine-tuned on the [CAFA 5](https://huggingface.co/datasets/andrewdalpino/CAFA5) dataset, this model predicts the gene oncology (GO) subgraph for a particular amino acid sequence - giving you insight into the protein's cellular composition, molecular function, and biological processes.
 
 ## Install Project Dependencies
 
@@ -16,37 +16,41 @@ pip install -r requirements.txt
 
 ## Fine-tuning
 
-For this model we'll be fine-tuning the pretrained ESM2 model with an added multi-label binary classification head on the CAFA5 dataset of GO term annotated protein sequences. To begin training with the default arguments, you can enter the command below.
+The Evolutionary-scale Model (ESM) architecture is a Transformer protein sequence model. It was pre-trained using the masked token objective on the [UniProt](https://www.uniprot.org/) dataset, a massive set of protein sequences. Our objective is to fine-tune the base model for gene ontology and taxonomy classification.
+
+### GO Term Training
+
+We'll be fine-tuning the pre-trained ESM2 model with an added multi-label binary classification head on the CAFA 5 dataset of GO term-annotated protein sequences. This will allow us to predict the subgraph of the gene ontology associated with a protein sequence. To begin training with the default arguments, you can enter the command below.
 
 ```sh
-python fine-tune.py
+python train-go-terms.py
 ```
 
 You can change the base model and dataset subset like in the example below.
 
 ```sh
-python fine-tune.py --base_model="facebook/esm2_t33_650M_UR50D" --dataset_subset="biological_process"
+python train-go-terms.py --base_model="facebook/esm2_t33_650M_UR50D" --dataset_subset="biological_process"
 ```
 
 You can also adjust the `batch_size`, `gradient_accumulation_steps`, and `learning_rate` like in the example below.
 
 ```sh
-python fine-tune.py --batch_size=16 --gradient_accumulation_step=4 --learning_rate=5e-4
+python train-go-terms.py --batch_size=16 --gradient_accumulation_step=4 --learning_rate=5e-4
 ```
 
 Training checkpoints will be saved at the `checkpoint_path` location. You can change the location and the `checkpoint_interval` like in the example below.
 
 ```sh
-python fine-tune.py --checkpoint_path="./checkpoints/biological-process-large.pt" --checkpoint_interval=3
+python train-go-terms.py --checkpoint_path="./checkpoints/biological-process-large.pt" --checkpoint_interval=3
 ```
 
 If you would like to resume training from a previous checkpoint, make sure to add the `resume` argument. Note that if the checkpoint path already exists, the file will be overwritten.
 
 ```sh
-python fine-tune.py --checkpoint_path="./checkpoints/checkpoint.pt" --resume
+python train-go-terms.py --checkpoint_path="./checkpoints/checkpoint.pt" --resume
 ```
 
-### Fine-tuning Arguments
+### GO Term Training Arguments
 
 | Argument | Default | Type | Description |
 |---|---|---|---|
@@ -54,20 +58,24 @@ python fine-tune.py --checkpoint_path="./checkpoints/checkpoint.pt" --resume
 | --dataset_subset | "all" | str | The subset of the dataset to train on, choose from `all`, `mf` for molecular function, `cc` for cellular composition, or `bp` for biological process. |
 | --num_dataset_processes | 1 | int | The number of CPU processes to use to process and load samples. |
 | --context_length | 1024 | int | The maximum length of the input sequences. |
-| --unfreeze_last_k_layers | 2 | int | Fine-tune the last k layers of the pretrained encoder. |
+| --unfreeze_last_k_layers | 0 | int | Fine-tune the last k layers of the pre-trained encoder. |
 | --batch_size | 16 | int | The number of samples to pass through the network at a time. |
 | --gradient_accumulation_steps | 4 | int | The number of batches to pass through the network before updating the weights. |
 | --max_gradient_norm | 1.0 | float | Clip gradients above this threshold norm before stepping. |
 | --learning_rate | 5e-4 | float | The learning rate of the Adam optimizer. |
-| --num_epochs | 10 | int | The number of epochs to train for. |
-| --eval_interval | 1 | int | Evaluate the model after this many epochs on the testing set. |
+| --num_epochs | 20 | int | The number of epochs to train for. |
+| --eval_interval | 2 | int | Evaluate the model after this many epochs on the testing set. |
 | --eval_ratio | 0.1 | float | The proportion of testing samples to validate the model on. |
-| --checkpoint_interval | 1 | int | Save the model parameters to disk every this many epochs. |
+| --checkpoint_interval | 2 | int | Save the model parameters to disk every this many epochs. |
 | --checkpoint_path | "./checkpoints/checkpoint.pt" | string | The path to the training checkpoint. |
 | --resume | False | bool | Should we resume training from the last checkpoint? |
 | --run_dir_path | "./runs/instruction-tune" | str | The path to the TensorBoard run directory for this training session. |
 | --device | "cuda" | str | The device to run the computation on ("cuda", "cuda:1", "mps", "cpu", etc). |
 | --seed | None | int | The seed for the random number generator. |
+
+### Taxonomy Training
+
+Coming soon ...
 
 ## Training Dashboard
 
@@ -77,12 +85,14 @@ We use [TensorBoard](https://www.tensorflow.org/tensorboard) to capture and disp
 tensorboard --logdir=./runs
 ```
 
-## Prediction
+## Inference
 
-We provide a prediction script for sampling the top k GO terms inferred by the model. Make sure to point the script at the correct label mapping file for it to translate the predicted label indices to their corresponding GO terms.
+### GO Term Ranking
+
+We provide a prediction script for sampling the top k GO terms inferred by the model.
 
 ```sh
-python predict.py --checkpoint_path="./checkpoints/checkpoint.pt" --top_k=5
+python rank-go-terms.py --checkpoint_path="./checkpoints/checkpoint.pt" --top_k=5
 ```
 
 You will be asked to enter a protein sequence to predict like in the example below.
@@ -97,28 +107,28 @@ Top 5 GO Terms:
 0.4599: cell periphery
 0.4597: membrane
 0.3749: plasma membrane
-...
 ```
 
-
-### Prediction Arguments
+### GO Term Ranking Arguments
 
 | Argument | Default | Type | Description |
 |---|---|---|---|
 | --checkpoint_path | "./checkpoints/checkpoint.pt" | str | The path to the training checkpoint. |
-| --go_obo_path | "./dataset/train/go-basic.obo" | str | The path to the gene ontology obo file. |
 | --context_length | 1024 | int | The maximum length of the input sequences. |
 | --top_k | 10 | int | The top k GO terms and their probabilities to output as predictions. |
 | --device | "cuda" | str | The device to run the computation on ("cuda", "cuda:1", "mps", "cpu", etc). |
 | --seed | None | int | The seed for the random number generator. |
 
+### Taxon ID Prediciton
+
+Coming soon ...
 
 ## References:
 
->- Z. Lin, et al. Evolutionary-scale prediction of atomic level protein structure with a language model. 2022.
->- G. A. Merino, et al. Hierarchical deep learning for predicting GO annotations by integrating protein knowledge. 2022.
->- J. Su, et al. ZLPR: A Novel Loss for Multi-label Classification. 2022.
+>- A. Rives, et al. Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences, 2021.
+>- Z. Lin, et al. Evolutionary-scale prediction of atomic level protein structure with a language model, 2022.
+>- G. A. Merino, et al. Hierarchical deep learning for predicting GO annotations by integrating protein knowledge, 2022.
 >- I. Friedberg, et al. CAFA 5 Protein Function Prediction. https://kaggle.com/competitions/cafa-5-protein-function-prediction, 2023.
->- D. Chen, et al. Endowing Protein Language Models with Structural Knowledge. 2024.
->- S. Jiao, et al. Beyond ESM2: Graph-Enhanced Protein Sequence Modeling with Efficient Clustering. 2024.
->- G. B. de Oliveira, et al. Scaling Up ESM2 Architectures for Long Protein Sequences Analysis: Long and Quantized Approaches. 2025.
+>- D. Chen, et al. Endowing Protein Language Models with Structural Knowledge, 2024.
+>- S. Jiao, et al. Beyond ESM2: Graph-Enhanced Protein Sequence Modeling with Efficient Clustering, 2024.
+>- G. B. de Oliveira, et al. Scaling Up ESM2 Architectures for Long Protein Sequences Analysis: Long and Quantized Approaches, 2025.

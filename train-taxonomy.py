@@ -12,13 +12,13 @@ from torch.amp import autocast
 from torch.utils.data import random_split
 from torch.nn.utils import clip_grad_norm_
 
-from torchmetrics.classification import BinaryPrecision, BinaryRecall
+from torchmetrics.classification import MulticlassPrecision, MulticlassRecall
 
 from torch.utils.tensorboard import SummaryWriter
 
 from transformers import EsmTokenizer, EsmConfig, EsmForSequenceClassification
 
-from data import CAFA5
+from data import CAFA5Taxonomy
 
 from tqdm import tqdm
 
@@ -35,7 +35,7 @@ AVAILABLE_BASE_MODELS = {
 
 def main():
     parser = ArgumentParser(
-        description="Fine-tune an ESM2 model for protein function classification."
+        description="Fine-tune an ESM2 model for protein taxonomy prediction."
     )
 
     parser.add_argument(
@@ -44,19 +44,19 @@ def main():
         choices=AVAILABLE_BASE_MODELS,
     )
     parser.add_argument(
-        "--dataset_subset", default="all", choices=CAFA5.AVAILABLE_SUBSETS
+        "--dataset_subset", default="all", choices=CAFA5Taxonomy.AVAILABLE_SUBSETS
     )
     parser.add_argument("--num_dataset_processes", default=1, type=int)
     parser.add_argument("--context_length", default=1024, type=int)
-    parser.add_argument("--unfreeze_last_k_layers", default=2, type=int)
+    parser.add_argument("--unfreeze_last_k_layers", default=0, type=int)
     parser.add_argument("--learning_rate", default=5e-4, type=float)
     parser.add_argument("--max_gradient_norm", default=1.0, type=float)
     parser.add_argument("--batch_size", default=16, type=int)
     parser.add_argument("--gradient_accumulation_steps", default=4, type=int)
-    parser.add_argument("--num_epochs", default=10, type=int)
-    parser.add_argument("--eval_interval", default=1, type=int)
+    parser.add_argument("--num_epochs", default=20, type=int)
+    parser.add_argument("--eval_interval", default=2, type=int)
     parser.add_argument("--eval_ratio", default=0.1, type=float)
-    parser.add_argument("--checkpoint_interval", default=1, type=int)
+    parser.add_argument("--checkpoint_interval", default=2, type=int)
     parser.add_argument(
         "--checkpoint_path", default="./checkpoints/checkpoint.pt", type=str
     )
@@ -114,7 +114,7 @@ def main():
 
     tokenizer = EsmTokenizer.from_pretrained(args.base_model)
 
-    dataset = CAFA5(
+    dataset = CAFA5Taxonomy(
         args.dataset_subset,
         tokenizer,
         args.context_length,
@@ -134,9 +134,9 @@ def main():
 
     config = EsmConfig.from_pretrained(args.base_model)
 
-    config.problem_type = "multi_label_classification"
-    config.label2id = dataset.terms_to_label_indices
-    config.id2label = dataset.label_indices_to_terms
+    config.problem_type = "single_label_classification"
+    config.label2id = dataset.taxon_id_to_label_index
+    config.id2label = dataset.label_index_to_taxon_id
     config.num_labels = dataset.num_classes
 
     model = EsmForSequenceClassification.from_pretrained(args.base_model, config=config)
@@ -157,8 +157,8 @@ def main():
 
     optimizer = AdamW(model.parameters(), lr=args.learning_rate)
 
-    precision_metric = BinaryPrecision().to(args.device)
-    recall_metric = BinaryRecall().to(args.device)
+    precision_metric = MulticlassPrecision().to(args.device)
+    recall_metric = MulticlassRecall().to(args.device)
 
     starting_epoch = 1
 
@@ -272,5 +272,5 @@ def main():
     print("Done!")
 
 
-if __name__ == "__main__":  #
+if __name__ == "__main__":
     main()
