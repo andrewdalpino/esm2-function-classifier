@@ -18,7 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from transformers import EsmTokenizer, EsmConfig, EsmForSequenceClassification
 
-from data import CAFA5GOTerms
+from data import CAFA5
 
 from tqdm import tqdm
 
@@ -44,7 +44,7 @@ def main():
         choices=AVAILABLE_BASE_MODELS,
     )
     parser.add_argument(
-        "--dataset_subset", default="all", choices=CAFA5GOTerms.AVAILABLE_SUBSETS
+        "--dataset_subset", default="all", choices=CAFA5.AVAILABLE_SUBSETS
     )
     parser.add_argument("--num_dataset_processes", default=1, type=int)
     parser.add_argument("--context_length", default=1024, type=int)
@@ -114,7 +114,7 @@ def main():
 
     tokenizer = EsmTokenizer.from_pretrained(args.base_model)
 
-    dataset = CAFA5GOTerms(
+    dataset = CAFA5(
         args.dataset_subset,
         tokenizer,
         args.context_length,

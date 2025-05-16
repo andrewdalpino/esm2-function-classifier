@@ -9,7 +9,7 @@ from torch.utils.data import Dataset
 from transformers import EsmTokenizer
 
 
-class CAFA5GOTerms(Dataset):
+class CAFA5(Dataset):
     """
     The CAFA5 dataset is a collection of protein sequences and their associated gene oncology terms.
     It is used for training and evaluating models for protein function prediction.
@@ -24,12 +24,7 @@ class CAFA5GOTerms(Dataset):
 
     AVAILABLE_SUBSETS = {"all", "mf", "cc", "bp"}
 
-    def __init__(
-        self,
-        subset: str,
-        tokenizer: EsmTokenizer,
-        context_length: int,
-    ):
+    def __init__(self, subset: str, tokenizer: EsmTokenizer, context_length: int):
         super().__init__()
 
         if subset not in self.AVAILABLE_SUBSETS:
@@ -84,86 +79,6 @@ class CAFA5GOTerms(Dataset):
             label_index = self.terms_to_label_indices[term]
 
             labels[label_index] = 1.0
-
-        attn_mask = torch.tensor(attn_mask, dtype=torch.int64)
-
-        x = torch.tensor(tokens, dtype=torch.int64)
-        y = torch.tensor(labels, dtype=torch.float32)
-
-        assert attn_mask.size(0) == self.context_length
-
-        assert x.size(0) == self.context_length
-        assert y.size(0) == self.num_classes
-
-        return x, y, attn_mask
-
-    def __len__(self):
-        return len(self.dataset)
-
-
-class CAFA5Taxonomy(Dataset):
-    """
-    The CAFA 5 protein sequences and their associated NCBI taxon ID annotations.
-    """
-
-    DATASET_NAME = "andrewdalpino/CAFA5"
-
-    def __init__(
-        self,
-        tokenizer: EsmTokenizer,
-        context_length: int,
-    ):
-        super().__init__()
-
-        dataset = load_dataset(self.DATASET_NAME, "all", split="train")
-
-        taxon_id_to_label_index = {}
-
-        label_index = 0
-
-        for sample in dataset:
-            taxon_id = sample["taxon_id"]
-
-            if taxon_id not in taxon_id_to_label_index:
-                taxon_id_to_label_index[taxon_id] = label_index
-
-                label_index += 1
-
-        num_classes = len(taxon_id_to_label_index)
-
-        self.dataset = dataset
-        self.tokenizer = tokenizer
-        self.context_length = context_length
-        self.taxon_id_to_label_index = taxon_id_to_label_index
-        self.num_classes = num_classes
-
-    @property
-    def label_index_to_taxon_id(self):
-        """
-        Returns a dictionary mapping label indices to their corresponding taxon IDs.
-        """
-
-        return {index: term for term, index in self.taxon_id_to_label_index.items()}
-
-    def __getitem__(self, index: int) -> tuple[Tensor, Tensor, Tensor]:
-        sample = self.dataset[index]
-
-        out = self.tokenizer(
-            sample["sequence"],
-            padding="max_length",
-            padding_side="right",
-            max_length=self.context_length,
-            truncation=True,
-        )
-
-        attn_mask = out["attention_mask"]
-        tokens = out["input_ids"]
-
-        labels = [0.0] * self.num_classes
-
-        label_index = self.taxon_id_to_label_index[sample["taxon_id"]]
-
-        labels[label_index] = 1.0
 
         attn_mask = torch.tensor(attn_mask, dtype=torch.int64)
 
