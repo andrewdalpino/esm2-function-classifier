@@ -61,6 +61,7 @@ python fine-tune.py --checkpoint_path="./checkpoints/checkpoint.pt" --resume
 | --gradient_accumulation_steps | 4 | int | The number of batches to pass through the network before updating the weights. |
 | --max_gradient_norm | 1.0 | float | Clip gradients above this threshold norm before stepping. |
 | --learning_rate | 5e-4 | float | The learning rate of the Adam optimizer. |
+| --dropout | 0.1 | float | The amount of dropout to apply to the hidden and attention layers during training. |
 | --num_epochs | 20 | int | The number of epochs to train for. |
 | --eval_interval | 2 | int | Evaluate the model after this many epochs on the testing set. |
 | --eval_ratio | 0.1 | float | The proportion of testing samples to validate the model on. |

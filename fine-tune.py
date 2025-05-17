@@ -53,6 +53,7 @@ def main():
     parser.add_argument("--max_gradient_norm", default=1.0, type=float)
     parser.add_argument("--batch_size", default=16, type=int)
     parser.add_argument("--gradient_accumulation_steps", default=4, type=int)
+    parser.add_argument("--dropout", default=0.1, type=float)
     parser.add_argument("--num_epochs", default=20, type=int)
     parser.add_argument("--eval_interval", default=2, type=int)
     parser.add_argument("--eval_ratio", default=0.1, type=float)
@@ -134,6 +135,8 @@ def main():
 
     config = EsmConfig.from_pretrained(args.base_model)
 
+    config.hidden_dropout_prob = args.dropout
+    config.attention_probs_dropout_prob = args.dropout
     config.problem_type = "multi_label_classification"
     config.label2id = dataset.terms_to_label_indices
     config.id2label = dataset.label_indices_to_terms
@@ -243,13 +246,18 @@ def main():
                 precision_metric.update(y_prob, y)
                 recall_metric.update(y_prob, y)
 
-            precision_score = precision_metric.compute()
-            recall_score = recall_metric.compute()
+            precision = precision_metric.compute()
+            recall = recall_metric.compute()
 
-            logger.add_scalar("Precision", precision_score, epoch)
-            logger.add_scalar("Recall", recall_score, epoch)
+            f1_score = (2 * precision * recall) / (precision + recall)
 
-            print(f"Precision: {precision_score:.3f}, Recall: {recall_score:.3f}")
+            logger.add_scalar("F1 Score", f1_score, epoch)
+            logger.add_scalar("Precision", precision, epoch)
+            logger.add_scalar("Recall", recall, epoch)
+
+            print(
+                f"F1: {f1_score:.3f}, Precision: {precision:.3f}, Recall: {recall:.3f}"
+            )
 
             precision_metric.reset()
             recall_metric.reset()
