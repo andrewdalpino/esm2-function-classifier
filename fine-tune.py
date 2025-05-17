@@ -47,7 +47,7 @@ def main():
         "--dataset_subset", default="all", choices=CAFA5.AVAILABLE_SUBSETS
     )
     parser.add_argument("--num_dataset_processes", default=1, type=int)
-    parser.add_argument("--context_length", default=1024, type=int)
+    parser.add_argument("--context_length", default=1026, type=int)
     parser.add_argument("--unfreeze_last_k_layers", default=0, type=int)
     parser.add_argument("--learning_rate", default=5e-4, type=float)
     parser.add_argument("--max_gradient_norm", default=1.0, type=float)
@@ -135,6 +135,7 @@ def main():
 
     config = EsmConfig.from_pretrained(args.base_model)
 
+    config.max_position_embedding = args.context_length
     config.hidden_dropout_prob = args.dropout
     config.attention_probs_dropout_prob = args.dropout
     config.problem_type = "multi_label_classification"

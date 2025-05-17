@@ -2,6 +2,19 @@
 
 An Evolutionary-scale Model (ESM) for protein function calling from protein sequences. Based on the ESM2 architecture and fine-tuned on the [CAFA 5](https://huggingface.co/datasets/andrewdalpino/CAFA5) dataset, this model predicts the gene oncology (GO) subgraph for a particular amino acid sequence - giving you insight into the protein's cellular component, molecular function, and biological processes.
 
+## Available Base Models
+
+The following base models on HuggingFace Hub are available to fine-tune. Each base is paired with a two-layer classification head.
+
+| Name | Embedding Dim. | Attn. Heads | Layers | Parameters |
+|---|---|---|---|---|---|---|
+| facebook/esm2_t6_8M_UR50D | 320 | 20 | 6 | 8M |
+| facebook/esm2_t12_35M_UR50D| 480 | 20 | 12 | 35M |
+| facebook/esm2_t30_150M_UR50D | 640 | 20 | 30 | 150M |
+| facebook/esm2_t33_650M_UR50D | 1280| 20 | 33 | 650M |
+| facebook/esm2_t36_3B_UR50D | 2560 | 40 | 36 | 3B |
+| facebook/esm2_t48_15B_UR50D | 5120 | 40 | 48 | 15B |
+
 ## Install Project Dependencies
 
 Project dependencies are specified in the `requirements.txt` file. You can install them with [pip](https://pip.pypa.io/en/stable/) using the following command from the project root. We recommend using a virtual environment such as `venv` to keep package dependencies on your system tidy.
@@ -55,7 +68,7 @@ python fine-tune.py --checkpoint_path="./checkpoints/checkpoint.pt" --resume
 | --base_model | "facebook/esm2_t6_8M_UR50D" | str | The base model name, choose from `facebook/esm2_t6_8M_UR50D`, `facebook/esm2_t12_35M_UR50D`, `facebook/esm2_t30_150M_UR50D`, `facebook/esm2_t33_650M_UR50D`, `facebook/esm2_t36_3B_UR50D`, or `facebook/esm2_t48_15B_UR50D`. |
 | --dataset_subset | "all" | str | The subset of the dataset to train on, choose from `all`, `mf` for molecular function, `cc` for cellular component, or `bp` for biological process. |
 | --num_dataset_processes | 1 | int | The number of CPU processes to use to process and load samples. |
-| --context_length | 1024 | int | The maximum length of the input sequences. |
+| --context_length | 1026 | int | The maximum length of the input sequences. |
 | --unfreeze_last_k_layers | 0 | int | Fine-tune the last k layers of the pre-trained encoder. |
 | --batch_size | 16 | int | The number of samples to pass through the network at a time. |
 | --gradient_accumulation_steps | 4 | int | The number of batches to pass through the network before updating the weights. |
