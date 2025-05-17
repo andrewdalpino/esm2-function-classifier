@@ -7,7 +7,7 @@ An Evolutionary-scale Model (ESM) for protein function calling from protein sequ
 The following base models on HuggingFace Hub are available to fine-tune. Each base is paired with a two-layer classification head.
 
 | Name | Embedding Dim. | Attn. Heads | Layers | Parameters |
-|---|---|---|---|---|---|---|
+|---|---|---|---|---|
 | facebook/esm2_t6_8M_UR50D | 320 | 20 | 6 | 8M |
 | facebook/esm2_t12_35M_UR50D| 480 | 20 | 12 | 35M |
 | facebook/esm2_t30_150M_UR50D | 640 | 20 | 30 | 150M |
