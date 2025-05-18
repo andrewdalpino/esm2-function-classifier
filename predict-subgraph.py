@@ -8,6 +8,15 @@ from transformers import EsmForSequenceClassification
 
 from torch.cuda import is_available as cuda_is_available
 
+import obonet
+
+import networkx as nx
+
+import matplotlib
+import matplotlib.pyplot as plt
+
+matplotlib.use("qt5agg")
+
 
 def main():
     parser = ArgumentParser(
@@ -17,8 +26,9 @@ def main():
     parser.add_argument(
         "--checkpoint_path", default="./checkpoints/checkpoint.pt", type=str
     )
+    parser.add_argument("--go_db_path", default="./dataset/go-basic.obo", type=str)
     parser.add_argument("--context_length", default=1026, type=int)
-    parser.add_argument("--top_k", default=10, type=int)
+    parser.add_argument("--top_p", default=0.5, type=float)
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seed", default=None, type=int)
 
@@ -29,8 +39,8 @@ def main():
             f"Context length must be greater than 0, {args.context_length} given."
         )
 
-    if args.top_k < 1:
-        raise ValueError(f"Top k must be greater than 0, {args.top_k} given.")
+    if args.top_p < 0.0 or args.top_p > 1.0:
+        raise ValueError(f"Top p must be between 0 and 1, {args.top_p} given.")
 
     if "cuda" in args.device and not cuda_is_available():
         raise RuntimeError("Cuda is not available.")
@@ -62,6 +72,8 @@ def main():
 
     print("Checkpoint loaded successfully.")
 
+    graph = obonet.read_obo(args.go_db_path)
+
     while True:
         sequence = input("Enter a sequence: ").replace(" ", "").replace("\n", "")
 
@@ -86,18 +98,22 @@ def main():
 
             probabilities = torch.sigmoid(outputs.logits.squeeze(0))
 
-            probabilities, indices = torch.topk(probabilities, args.top_k)
+            go_terms = []
 
-            probabilities = probabilities.tolist()
+            for index, probability in enumerate(probabilities):
+                if probability > args.top_p:
+                    go_term = config.id2label[index]
 
-            terms = [config.id2label[index] for index in indices.tolist()]
+                    go_terms.append(go_term)
 
-            print(f"Top {args.top_k} GO Terms:")
+            subgraph = graph.subgraph(go_terms)
 
-            for term, probability in zip(terms, probabilities):
-                print(f"{probability:.4f}: {term}")
+            plt.figure()
+            plt.title("GO Term Subgraph")
 
-            print("\n")
+            nx.draw_networkx(subgraph, node_size=500)
+
+            plt.show()
 
         if "y" not in input("Go again? (yes|no): ").lower():
             break
