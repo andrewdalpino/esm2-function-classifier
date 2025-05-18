@@ -1,4 +1,5 @@
 import random
+from functools import partial
 
 from argparse import ArgumentParser
 
@@ -74,6 +75,16 @@ def main():
 
     graph = obonet.read_obo(args.go_db_path)
 
+    plot_subgraph = partial(
+        nx.draw_networkx,
+        node_size=2000,
+        font_size=8,
+        cmap="YlGn",
+        vmin=args.top_p,
+        vmax=1,
+        with_labels=True,
+    )
+
     while True:
         sequence = input("Enter a sequence: ").replace(" ", "").replace("\n", "")
 
@@ -98,20 +109,22 @@ def main():
 
             probabilities = torch.sigmoid(outputs.logits.squeeze(0))
 
-            go_terms = []
+            go_term_probabilities = {
+                config.id2label[index]: probability.item()
+                for index, probability in enumerate(probabilities)
+                if probability > args.top_p
+            }
 
-            for index, probability in enumerate(probabilities):
-                if probability > args.top_p:
-                    go_term = config.id2label[index]
+            subgraph = graph.subgraph(go_term_probabilities.keys())
 
-                    go_terms.append(go_term)
+            plt.figure(figsize=(10, 10))
+            plt.title("Gene Ontology Subgraph")
 
-            subgraph = graph.subgraph(go_terms)
-
-            plt.figure()
-            plt.title("GO Term Subgraph")
-
-            nx.draw_networkx(subgraph, node_size=500)
+            plot_subgraph(
+                subgraph,
+                pos=nx.spring_layout(subgraph, k=0.5),
+                node_color=go_term_probabilities.values(),
+            )
 
             plt.show()
 
