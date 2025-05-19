@@ -6,14 +6,14 @@ An Evolutionary-scale Model (ESM) for protein function calling from amino acid s
 
 The following pretrained models are available for download on HuggingFace Hub.
 
-| Name | Embedding Dim. | Attn. Heads | Layers | Context Length |
+| Name | Embedding Dim. | Attn. Heads | Encoder Layers | Context Length |
 |---|---|---|---|---|
 | [andrewdalpino/ESM2-35M-Protein-Biological-Process](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Biological-Process) | 480 | 20 | 12 | 1026 |
 | [andrewdalpino/ESM2-35M-Protein-Molecular-Function](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Molecular-Function) | 480 | 20 | 12 | 1026 |
 | [andrewdalpino/ESM2-35M-Protein-Cellular-Component](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Cellular-Component) | 480 | 20 | 12 | 1026 |
-| [andrewdalpino/ESM2-35M-Protein-Biological-Process](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Biological-Process) | 640 | 20 | 30 | 1026 |
-| [andrewdalpino/ESM2-35M-Protein-Molecular-Function](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Molecular-Function) | 640 | 20 | 30 | 1026 |
-| [andrewdalpino/ESM2-35M-Protein-Cellular-Component](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Cellular-Component) | 640 | 20 | 30 | 1026 |
+| [andrewdalpino/ESM2-150M-Protein-Biological-Process](https://huggingface.co/andrewdalpino/ESM2-150M-Protein-Biological-Process) | 640 | 20 | 30 | 1026 |
+| [andrewdalpino/ESM2-150M-Protein-Molecular-Function](https://huggingface.co/andrewdalpino/ESM2-150M-Protein-Molecular-Function) | 640 | 20 | 30 | 1026 |
+| [andrewdalpino/ESM2-150M-Protein-Cellular-Component](https://huggingface.co/andrewdalpino/ESM2-150M-Protein-Cellular-Component) | 640 | 20 | 30 | 1026 |
 
 
 ## Install Project Dependencies
