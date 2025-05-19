@@ -72,32 +72,28 @@ def main():
         )
 
         input_ids = out["input_ids"]
-        attn_mask = out["attention_mask"]
 
         input_ids = (
             torch.tensor(input_ids, dtype=torch.int64).unsqueeze(0).to(args.device)
         )
-        attn_mask = (
-            torch.tensor(attn_mask, dtype=torch.int64).unsqueeze(0).to(args.device)
-        )
 
         with torch.no_grad():
-            outputs = model.forward(input_ids, attention_mask=attn_mask)
+            outputs = model.forward(input_ids)
 
             probabilities = torch.sigmoid(outputs.logits.squeeze(0))
 
             probabilities, indices = torch.topk(probabilities, args.top_k)
 
-            probabilities = probabilities.tolist()
+        probabilities = probabilities.tolist()
 
-            terms = [config.id2label[index] for index in indices.tolist()]
+        terms = [config.id2label[index] for index in indices.tolist()]
 
-            print(f"Top {args.top_k} GO Terms:")
+        print(f"Top {args.top_k} GO Terms:")
 
-            for term, probability in zip(terms, probabilities):
-                print(f"{probability:.4f}: {term}")
+        for term, probability in zip(terms, probabilities):
+            print(f"{probability:.4f}: {term}")
 
-            print("\n")
+        print("\n")
 
         if "y" not in input("Go again? (yes|no): ").lower():
             break

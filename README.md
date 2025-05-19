@@ -1,19 +1,20 @@
 # ESM2 Protein Function Caller
 
-An Evolutionary-scale Model (ESM) for protein function calling from protein sequences. Based on the ESM2 architecture and fine-tuned on the [CAFA 5](https://huggingface.co/datasets/andrewdalpino/CAFA5) dataset, this model predicts the gene oncology (GO) subgraph for a particular amino acid sequence - giving you insight into the protein's cellular component, molecular function, and biological processes.
+An Evolutionary-scale Model (ESM) for protein function calling from amino acid sequences. Based on the ESM2 architecture and fine-tuned on the [CAFA 5](https://huggingface.co/datasets/andrewdalpino/CAFA5) dataset, this model predicts the gene ontology (GO) subgraph for a particular protein sequence - giving you insight into the molecular function, biological process, and location of the activity inside the cell.
 
-## Available Base Models
+## Available Models
 
-The following base models on HuggingFace Hub are available to fine-tune. Each base is paired with a two-layer classification head.
+The following pretrained models are available for download on HuggingFace Hub.
 
-| Name | Embedding Dim. | Attn. Heads | Layers | Parameters |
+| Name | Embedding Dim. | Attn. Heads | Layers | Context Length |
 |---|---|---|---|---|
-| facebook/esm2_t6_8M_UR50D | 320 | 20 | 6 | 8M |
-| facebook/esm2_t12_35M_UR50D| 480 | 20 | 12 | 35M |
-| facebook/esm2_t30_150M_UR50D | 640 | 20 | 30 | 150M |
-| facebook/esm2_t33_650M_UR50D | 1280| 20 | 33 | 650M |
-| facebook/esm2_t36_3B_UR50D | 2560 | 40 | 36 | 3B |
-| facebook/esm2_t48_15B_UR50D | 5120 | 40 | 48 | 15B |
+| [andrewdalpino/ESM2-35M-Protein-Biological-Process](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Biological-Process) | 480 | 20 | 12 | 1026 |
+| [andrewdalpino/ESM2-35M-Protein-Molecular-Function](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Molecular-Function) | 480 | 20 | 12 | 1026 |
+| [andrewdalpino/ESM2-35M-Protein-Cellular-Component](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Cellular-Component) | 480 | 20 | 12 | 1026 |
+| [andrewdalpino/ESM2-35M-Protein-Biological-Process](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Biological-Process) | 640 | 20 | 30 | 1026 |
+| [andrewdalpino/ESM2-35M-Protein-Molecular-Function](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Molecular-Function) | 640 | 20 | 30 | 1026 |
+| [andrewdalpino/ESM2-35M-Protein-Cellular-Component](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Cellular-Component) | 640 | 20 | 30 | 1026 |
+
 
 ## Install Project Dependencies
 
