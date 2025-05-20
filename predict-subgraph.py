@@ -95,17 +95,13 @@ def main():
         )
 
         input_ids = out["input_ids"]
-        attn_mask = out["attention_mask"]
 
         input_ids = (
             torch.tensor(input_ids, dtype=torch.int64).unsqueeze(0).to(args.device)
         )
-        attn_mask = (
-            torch.tensor(attn_mask, dtype=torch.int64).unsqueeze(0).to(args.device)
-        )
 
         with torch.no_grad():
-            outputs = model.forward(input_ids, attention_mask=attn_mask)
+            outputs = model.forward(input_ids)
 
             probabilities = torch.sigmoid(outputs.logits.squeeze(0))
 

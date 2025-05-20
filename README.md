@@ -1,6 +1,6 @@
 # ESM2 Protein Function Caller
 
-An Evolutionary-scale Model (ESM) for protein function calling from amino acid sequences. Based on the ESM2 architecture and fine-tuned on the [CAFA 5](https://huggingface.co/datasets/andrewdalpino/CAFA5) dataset, this model predicts the gene ontology (GO) subgraph for a particular protein sequence - giving you insight into the molecular function, biological process, and location of the activity inside the cell.
+An Evolutionary-scale Model (ESM) for protein function calling from amino acid sequences. Based on the ESM2 Transformer architecture and fine-tuned on the [CAFA 5](https://huggingface.co/datasets/andrewdalpino/CAFA5) dataset, this model predicts the gene ontology (GO) subgraph for a particular protein sequence - giving you insight into the molecular function, biological process, and location of the activity inside the cell.
 
 ## Pretrained Models
 
@@ -149,7 +149,4 @@ Top 5 GO Terms:
 >- Z. Lin, et al. Evolutionary-scale prediction of atomic level protein structure with a language model, 2022.
 >- G. A. Merino, et al. Hierarchical deep learning for predicting GO annotations by integrating protein knowledge, 2022.
 >- I. Friedberg, et al. CAFA 5 Protein Function Prediction. https://kaggle.com/competitions/cafa-5-protein-function-prediction, 2023.
->- D. Chen, et al. Endowing Protein Language Models with Structural Knowledge, 2024.
->- S. Jiao, et al. Beyond ESM2: Graph-Enhanced Protein Sequence Modeling with Efficient Clustering, 2024.
->- G. B. de Oliveira, et al. Scaling Up ESM2 Architectures for Long Protein Sequences Analysis: Long and Quantized Approaches, 2025.
 >- M. Ashburner, et al. Gene Ontology: tool for the unification of biology, 2000.
