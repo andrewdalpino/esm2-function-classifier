@@ -137,7 +137,7 @@ def main():
 
     config = EsmConfig.from_pretrained(args.base_model)
 
-    config.max_position_embedding = args.context_length
+    config.max_position_embeddings = args.context_length
     config.hidden_dropout_prob = args.dropout
     config.attention_probs_dropout_prob = args.dropout
     config.problem_type = "multi_label_classification"
