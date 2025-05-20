@@ -24,13 +24,24 @@ class CAFA5(Dataset):
 
     AVAILABLE_SUBSETS = {"all", "mf", "cc", "bp"}
 
-    def __init__(self, subset: str, tokenizer: EsmTokenizer, context_length: int):
+    def __init__(
+        self,
+        subset: str,
+        tokenizer: EsmTokenizer,
+        context_length: int,
+        filter_long_sequences: bool = False,
+    ):
         super().__init__()
 
         if subset not in self.AVAILABLE_SUBSETS:
             raise ValueError(f"Subset '{subset}' is invalid.")
 
         dataset = load_dataset(self.DATASET_NAME, subset, split="train")
+
+        if filter_long_sequences:
+            dataset = dataset.filter(
+                lambda sample: sample["length"] <= context_length - 2
+            )
 
         terms_to_label_indices = {}
 

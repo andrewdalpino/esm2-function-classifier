@@ -48,6 +48,7 @@ def main():
     )
     parser.add_argument("--num_dataset_processes", default=1, type=int)
     parser.add_argument("--context_length", default=1026, type=int)
+    parser.add_argument("--filter_long_sequences", action="store_true")
     parser.add_argument("--unfreeze_last_k_layers", default=0, type=int)
     parser.add_argument("--learning_rate", default=1e-4, type=float)
     parser.add_argument("--max_gradient_norm", default=1.0, type=float)
@@ -119,6 +120,7 @@ def main():
         args.dataset_subset,
         tokenizer,
         args.context_length,
+        args.filter_long_sequences,
     )
 
     training, testing = random_split(dataset, (1.0 - args.eval_ratio, args.eval_ratio))

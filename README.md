@@ -20,17 +20,15 @@ The following pretrained models are available on HuggingFace Hub.
 Since the HuggingFace [Transformers](https://github.com/huggingface/transformers) library supports the ESM architecture natively, we can start protein function calling quickly in just a few lines of code. Check out the `import-pretrained.ipynb` notebook for a more detailed example with GO term ranking.
 
 ```python
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import EsmTokenizer, EsmForSequenceClassification
 
 model_name = "andrewdalpino/ESM2-35M-Protein-Molecular-Function"
 
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer = EsmTokenizer.from_pretrained(model_name)
 
-model = AutoModelForSequenceClassification.from_pretrained(model_name)
+model = EsmForSequenceClassification.from_pretrained(model_name)
 
-# ... tokenize AA sequences
-
-# ... rank GO terms
+# ... then tokenize AA sequences and rank GO terms
 ```
 
 ## Install Project Dependencies
@@ -87,6 +85,7 @@ python fine-tune.py --checkpoint_path="./checkpoints/checkpoint.pt" --resume
 | --dataset_subset | "all" | str | The subset of the dataset to train on, choose from `all`, `mf` for molecular function, `cc` for cellular component, or `bp` for biological process. |
 | --num_dataset_processes | 1 | int | The number of CPU processes to use to process and load samples. |
 | --context_length | 1026 | int | The maximum length of the input sequences. |
+| --filter_long_sequences | False | Should we filter sequences that are longer than the context length from the training set? |
 | --unfreeze_last_k_layers | 0 | int | Fine-tune the last k layers of the pre-trained encoder. |
 | --batch_size | 16 | int | The number of samples to pass through the network at a time. |
 | --gradient_accumulation_steps | 4 | int | The number of batches to pass through the network before updating the weights. |
