@@ -2,9 +2,9 @@
 
 An Evolutionary-scale Model (ESM) for protein function calling from amino acid sequences. Based on the ESM2 architecture and fine-tuned on the [CAFA 5](https://huggingface.co/datasets/andrewdalpino/CAFA5) dataset, this model predicts the gene ontology (GO) subgraph for a particular protein sequence - giving you insight into the molecular function, biological process, and location of the activity inside the cell.
 
-## Available Models
+## Pretrained Models
 
-The following pretrained models are available for download on HuggingFace Hub.
+The following pretrained models are available on HuggingFace Hub.
 
 | Name | Embedding Dim. | Attn. Heads | Encoder Layers | Context Length |
 |---|---|---|---|---|
@@ -15,6 +15,23 @@ The following pretrained models are available for download on HuggingFace Hub.
 | [andrewdalpino/ESM2-150M-Protein-Molecular-Function](https://huggingface.co/andrewdalpino/ESM2-150M-Protein-Molecular-Function) | 640 | 20 | 30 | 1026 |
 | [andrewdalpino/ESM2-150M-Protein-Cellular-Component](https://huggingface.co/andrewdalpino/ESM2-150M-Protein-Cellular-Component) | 640 | 20 | 30 | 1026 |
 
+### Using a Pretrained Model
+
+Since the HuggingFace [Transformers](https://github.com/huggingface/transformers) library supports the ESM architecture natively, we can start protein function calling quickly in just a few lines of code. Check out the `import-pretrained.ipynb` notebook for a more detailed example with GO term ranking.
+
+```python
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+model_name = "andrewdalpino/ESM2-35M-Protein-Molecular-Function"
+
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+model = AutoModelForSequenceClassification.from_pretrained(model_name)
+
+# ... tokenize AA sequences
+
+# ... rank GO terms
+```
 
 ## Install Project Dependencies
 
