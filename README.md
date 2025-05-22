@@ -31,6 +31,14 @@ model = EsmForSequenceClassification.from_pretrained(model_name)
 # ... then tokenize AA sequences and rank GO terms
 ```
 
+## What are GO terms?
+
+> "The Gene Ontology (GO) is a concept hierarchy that describes the biological function of genes and gene products at different levels of abstraction (Ashburner et al., 2000). It is a good model to describe the multi-faceted nature of protein function."
+>
+> "GO is a directed acyclic graph. The nodes in this graph are functional descriptors (terms or classes) connected by relational ties between them (is_a, part_of, etc.). For example, terms 'protein binding activity' and 'binding activity' are related by an is_a relationship; however, the edge in the graph is often reversed to point from binding towards protein binding. This graph contains three subgraphs (subontologies): Molecular Function (MF), Biological Process (BP), and Cellular Component (CC), defined by their root nodes. Biologically, each subgraph represent a different aspect of the protein's function: what it does on a molecular level (MF), which biological processes it participates in (BP) and where in the cell it is located (CC)."
+>
+> From [CAFA 5 Protein Function Prediction](https://www.kaggle.com/competitions/cafa-5-protein-function-prediction/data)
+
 ## Install Project Dependencies
 
 Project dependencies are specified in the `requirements.txt` file. You can install them with [pip](https://pip.pypa.io/en/stable/) using the following command from the project root. We recommend using a virtual environment such as `venv` to keep package dependencies on your system tidy.
@@ -113,7 +121,7 @@ tensorboard --logdir=./runs
 We provide a prediction script for sampling the top k GO terms inferred by the model.
 
 ```sh
-python predict-rank.py --checkpoint_path="./checkpoints/checkpoint.pt" --top_k=5
+python predict-rank.py --checkpoint_path="./checkpoints/checkpoint.pt" --top_k=20
 ```
 
 You will be asked to enter a protein sequence to predict like in the example below.
@@ -122,12 +130,13 @@ You will be asked to enter a protein sequence to predict like in the example bel
 Checkpoint loaded successfully
 Enter a sequence: MASMAGVGGGSGKRVPPTRVWWRLYEFALGLLGVVFFAAAATSGKTSRLVSVLIG...
 
-Top 5 GO Terms:
+Top 20 GO Terms:
 0.6195: cellular anatomical entity
 0.5855: cellular_component
 0.4599: cell periphery
 0.4597: membrane
 0.3749: plasma membrane
+...
 ```
 
 ### Ranking Arguments
@@ -135,8 +144,31 @@ Top 5 GO Terms:
 | Argument | Default | Type | Description |
 |---|---|---|---|
 | --checkpoint_path | "./checkpoints/checkpoint.pt" | str | The path to the training checkpoint. |
-| --context_length | 1024 | int | The maximum length of the input sequences. |
+| --context_length | 1026 | int | The maximum length of the input sequences. |
 | --top_k | 10 | int | The top k GO terms and their probabilities to output as predictions. |
+| --device | "cuda" | str | The device to run the computation on ("cuda", "cuda:1", "mps", "cpu", etc). |
+| --seed | None | int | The seed for the random number generator. |
+
+## GO Subgraph Prediction
+
+We can also infer the gene ontology subgraph of a particular sequence. In the example, below the script outputs a graphical representation of the predicted GO terms.
+
+```sh
+python predict-subgraph.py --checkpoint_path="./checkpoints/checkpoint.pt" --top_p=0.5
+```
+
+```sh
+Checkpoint loaded successfully
+Enter a sequence: MASMAGVGGGSGKRVPPTRVWWRLYEFALGLLGVVFFAAAATSGKTSRLVSVLIG...
+```
+
+### Subgraph Arguments
+
+| Argument | Default | Type | Description |
+|---|---|---|---|
+| --checkpoint_path | "./checkpoints/checkpoint.pt" | str | The path to the training checkpoint. |
+| --context_length | 1026 | int | The maximum length of the input sequences. |
+| --top_p | 0.5 | float | Only display nodes with the top p probability. |
 | --device | "cuda" | str | The device to run the computation on ("cuda", "cuda:1", "mps", "cpu", etc). |
 | --seed | None | int | The seed for the random number generator. |
 
