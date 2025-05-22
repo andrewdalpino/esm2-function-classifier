@@ -79,10 +79,10 @@ def main():
 
     plot_subgraph = partial(
         nx.draw_networkx,
-        node_size=2000,
-        font_size=8,
-        cmap="YlGn",
-        vmin=args.top_p,
+        node_size=3000,
+        font_size=10,
+        cmap="PiYG",
+        vmin=0,
         vmax=1,
         with_labels=True,
     )
@@ -115,13 +115,20 @@ def main():
 
             subgraph = graph.subgraph(go_term_probabilities.keys())
 
+            labels = {go_term: name for go_term, name in subgraph.nodes(data="name")}
+
+            probabilities = [
+                go_term_probabilities[go_term] for go_term in subgraph.nodes()
+            ]
+
             plt.figure(figsize=(10, 10))
             plt.title("Gene Ontology Subgraph")
 
             plot_subgraph(
                 subgraph,
                 pos=nx.spring_layout(subgraph, k=0.5),
-                node_color=go_term_probabilities.values(),
+                node_color=probabilities,
+                labels=labels,
             )
 
             plt.show()
