@@ -1,6 +1,6 @@
 # ESM2 Protein Function Caller
 
-An Evolutionary-scale Model (ESM) for protein function calling from amino acid sequences. Based on the ESM2 Transformer architecture and fine-tuned on the [CAFA 5](https://huggingface.co/datasets/andrewdalpino/CAFA5) dataset, this model predicts the gene ontology (GO) subgraph for a particular protein sequence - giving you insight into the molecular function, biological process, and location of the activity inside the cell.
+An Evolutionary-scale Model (ESM) for protein function calling from amino acid sequences. Based on the ESM2 Transformer architecture and fine-tuned on the [CAFA 5](https://huggingface.co/datasets/andrewdalpino/CAFA5) dataset, this model predicts the gene ontology (GO) terms for a particular protein sequence - giving you insight into the molecular function, biological process, and location of the activity inside the cell. It does so by solving a massive multi-label binary classification objective which allows for both GO term ranking and subgraph prediction.
 
 ## What are GO terms?
 
