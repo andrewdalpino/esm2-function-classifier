@@ -9,7 +9,6 @@ from torch.optim import AdamW
 from torch.utils.data import DataLoader
 from torch.cuda import is_available as cuda_is_available, is_bf16_supported
 from torch.amp import autocast
-from torch.utils.data import random_split
 from torch.nn.utils import clip_grad_norm_
 
 from torchmetrics.classification import BinaryPrecision, BinaryRecall
@@ -54,10 +53,8 @@ def main():
     parser.add_argument("--max_gradient_norm", default=1.0, type=float)
     parser.add_argument("--batch_size", default=16, type=int)
     parser.add_argument("--gradient_accumulation_steps", default=4, type=int)
-    parser.add_argument("--dropout", default=0.1, type=float)
-    parser.add_argument("--num_epochs", default=20, type=int)
+    parser.add_argument("--num_epochs", default=30, type=int)
     parser.add_argument("--eval_interval", default=2, type=int)
-    parser.add_argument("--eval_ratio", default=0.1, type=float)
     parser.add_argument("--checkpoint_interval", default=2, type=int)
     parser.add_argument(
         "--checkpoint_path", default="./checkpoints/checkpoint.pt", type=str
@@ -83,11 +80,6 @@ def main():
     if args.eval_interval < 1:
         raise ValueError(
             f"Eval interval must be greater than 0, {args.eval_interval} given."
-        )
-
-    if args.eval_ratio < 0 or args.eval_ratio > 1:
-        raise ValueError(
-            f"Eval ratio must be between 0 and 1, {args.eval_ratio} given."
         )
 
     if args.checkpoint_interval < 1:
@@ -116,14 +108,16 @@ def main():
 
     tokenizer = EsmTokenizer.from_pretrained(args.base_model)
 
-    dataset = CAFA5(
-        args.dataset_subset,
-        tokenizer,
-        args.context_length,
-        args.filter_long_sequences,
+    new_dataset = partial(
+        CAFA5,
+        subset=args.dataset_subset,
+        tokenizer=tokenizer,
+        context_length=args.context_length,
+        filter_long_sequences=args.filter_long_sequences,
     )
 
-    training, testing = random_split(dataset, (1.0 - args.eval_ratio, args.eval_ratio))
+    training = new_dataset(split="train")
+    testing = new_dataset(split="test")
 
     new_dataloader = partial(
         DataLoader,
@@ -133,17 +127,14 @@ def main():
     )
 
     train_loader = new_dataloader(training, shuffle=True)
-    test_loader = new_dataloader(testing, shuffle=False)
+    test_loader = new_dataloader(testing)
 
     config = EsmConfig.from_pretrained(args.base_model)
 
-    config.max_position_embeddings = args.context_length
-    config.hidden_dropout_prob = args.dropout
-    config.attention_probs_dropout_prob = args.dropout
     config.problem_type = "multi_label_classification"
-    config.label2id = dataset.terms_to_label_indices
-    config.id2label = dataset.label_indices_to_terms
-    config.num_labels = dataset.num_classes
+    config.label2id = training.terms_to_label_indices
+    config.id2label = training.label_indices_to_terms
+    config.num_labels = training.num_classes
 
     model = EsmForSequenceClassification.from_pretrained(args.base_model, config=config)
 

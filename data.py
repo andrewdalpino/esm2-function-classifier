@@ -24,9 +24,12 @@ class CAFA5(Dataset):
 
     AVAILABLE_SUBSETS = {"all", "mf", "cc", "bp"}
 
+    AVAILABLE_SPLITS = {"train", "test"}
+
     def __init__(
         self,
         subset: str,
+        split: str,
         tokenizer: EsmTokenizer,
         context_length: int,
         filter_long_sequences: bool = False,
@@ -36,7 +39,15 @@ class CAFA5(Dataset):
         if subset not in self.AVAILABLE_SUBSETS:
             raise ValueError(f"Subset '{subset}' is invalid.")
 
-        dataset = load_dataset(self.DATASET_NAME, subset, split="train")
+        if split not in self.AVAILABLE_SPLITS:
+            raise ValueError(f"Split '{split}' is invalid.")
+
+        if context_length < 1:
+            raise ValueError(
+                f"Context length must be greater than 0, {context_length} given."
+            )
+
+        dataset = load_dataset(self.DATASET_NAME, subset)
 
         if filter_long_sequences:
             dataset = dataset.filter(
@@ -47,14 +58,17 @@ class CAFA5(Dataset):
 
         label_index = 0
 
-        for sample in dataset:
-            for term in sample["terms"]:
-                if term not in terms_to_label_indices:
-                    terms_to_label_indices[term] = label_index
+        for subset in dataset.values():
+            for sample in subset:
+                for term in sample["terms"]:
+                    if term not in terms_to_label_indices:
+                        terms_to_label_indices[term] = label_index
 
-                    label_index += 1
+                        label_index += 1
 
         num_classes = len(terms_to_label_indices)
+
+        dataset = dataset[split]
 
         self.dataset = dataset
         self.tokenizer = tokenizer

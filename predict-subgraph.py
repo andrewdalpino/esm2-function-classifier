@@ -75,6 +75,8 @@ def main():
 
     graph = obonet.read_obo(args.go_db_path)
 
+    assert nx.is_directed_acyclic_graph(graph), "Invalid GO graph."
+
     plot_subgraph = partial(
         nx.draw_networkx,
         node_size=2000,
