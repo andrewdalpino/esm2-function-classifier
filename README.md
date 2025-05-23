@@ -151,7 +151,7 @@ Top 20 GO Terms:
 
 ## GO Subgraph Prediction
 
-We can also infer the gene ontology subgraph of a particular sequence. In the example, below the script outputs a graphical representation of the predicted GO terms.
+We can also infer the gene ontology subgraph of a particular sequence. The `predict-subgraph.py` script outputs a graphical representation of the predictions where green nodes have high probability and pink nodes have low probability.
 
 ```sh
 python predict-subgraph.py --checkpoint_path="./checkpoints/checkpoint.pt" --top_p=0.1
