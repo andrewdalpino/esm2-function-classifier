@@ -154,13 +154,15 @@ Top 20 GO Terms:
 We can also infer the gene ontology subgraph of a particular sequence. In the example, below the script outputs a graphical representation of the predicted GO terms.
 
 ```sh
-python predict-subgraph.py --checkpoint_path="./checkpoints/checkpoint.pt" --top_p=0.5
+python predict-subgraph.py --checkpoint_path="./checkpoints/checkpoint.pt" --top_p=0.1
 ```
 
 ```sh
 Checkpoint loaded successfully
-Enter a sequence: MASMAGVGGGSGKRVPPTRVWWRLYEFALGLLGVVFFAAAATSGKTSRLVSVLIG...
+Enter a sequence: NMPNERLKWLMLFAAVALIACGSQTLAANPPDADQKGPVFLKEPTNRIDFSNSTG...
 ```
+
+![Example GO Subgraph](https://raw.githubusercontent.com/andrewdalpino/esm2-function-classifier/master/docs/images/Q0E9J9-mf.png)
 
 ### Subgraph Arguments
 

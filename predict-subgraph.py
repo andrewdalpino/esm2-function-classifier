@@ -29,7 +29,7 @@ def main():
     )
     parser.add_argument("--go_db_path", default="./dataset/go-basic.obo", type=str)
     parser.add_argument("--context_length", default=1026, type=int)
-    parser.add_argument("--top_p", default=0.5, type=float)
+    parser.add_argument("--top_p", default=0.4, type=float)
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seed", default=None, type=int)
 
@@ -85,6 +85,7 @@ def main():
         vmin=0,
         vmax=1,
         with_labels=True,
+        arrowsize=20,
     )
 
     while True:
@@ -115,19 +116,29 @@ def main():
 
             subgraph = graph.subgraph(go_term_probabilities.keys())
 
+            probabilities = {
+                go_term: go_term_probabilities[go_term] for go_term in subgraph.nodes()
+            }
+
+            # Fix up the probabilities by exploiting the DAG hierarchy.
+            if nx.is_directed_acyclic_graph(subgraph):
+                for node in subgraph.nodes():
+                    child_probability = probabilities[node]
+
+                    for descendant in nx.descendants(subgraph, node):
+                        probabilities[descendant] = max(
+                            child_probability,
+                            probabilities[descendant],
+                        )
+
             labels = {go_term: name for go_term, name in subgraph.nodes(data="name")}
 
-            probabilities = [
-                go_term_probabilities[go_term] for go_term in subgraph.nodes()
-            ]
-
-            plt.figure(figsize=(10, 10))
+            plt.figure(figsize=(10, 8))
             plt.title("Gene Ontology Subgraph")
 
             plot_subgraph(
                 subgraph,
-                pos=nx.spring_layout(subgraph, k=0.5),
-                node_color=probabilities,
+                node_color=probabilities.values(),
                 labels=labels,
             )
 
