@@ -148,8 +148,10 @@ def main():
             for param in module.parameters():
                 param.requires_grad = True
 
-    print("Compiling model ...")
-    model = torch.compile(model)
+    if "cuda" in args.device:
+        model = torch.compile(model)
+
+        print("Model compiled")
 
     model = model.to(args.device)
 
