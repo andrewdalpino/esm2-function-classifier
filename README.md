@@ -116,6 +116,31 @@ We use [TensorBoard](https://www.tensorflow.org/tensorboard) to capture and disp
 tensorboard --logdir=./runs
 ```
 
+## GO Subgraph Prediction
+
+We can also infer the gene ontology subgraph of a particular sequence. The `predict-subgraph.py` script outputs a graphical representation of the predictions where green nodes have high probability and pink nodes have low probability.
+
+```sh
+python predict-subgraph.py --checkpoint_path="./checkpoints/checkpoint.pt" --top_p=0.1
+```
+
+```sh
+Checkpoint loaded successfully
+Enter a sequence: NMPNERLKWLMLFAAVALIACGSQTLAANPPDADQKGPVFLKEPTNRIDFSNSTG...
+```
+
+![Example GO Subgraph](https://raw.githubusercontent.com/andrewdalpino/esm2-function-classifier/master/docs/images/Q0E9J9-mf.png)
+
+### Subgraph Arguments
+
+| Argument | Default | Type | Description |
+|---|---|---|---|
+| --checkpoint_path | "./checkpoints/checkpoint.pt" | str | The path to the training checkpoint. |
+| --context_length | 1026 | int | The maximum length of the input sequences. |
+| --top_p | 0.5 | float | Only display nodes with the top p probability. |
+| --device | "cuda" | str | The device to run the computation on ("cuda", "cuda:1", "mps", "cpu", etc). |
+| --seed | None | int | The seed for the random number generator. |
+
 ## GO Term Ranking
 
 We provide a prediction script for sampling the top k GO terms inferred by the model.
@@ -146,31 +171,6 @@ Top 20 GO Terms:
 | --checkpoint_path | "./checkpoints/checkpoint.pt" | str | The path to the training checkpoint. |
 | --context_length | 1026 | int | The maximum length of the input sequences. |
 | --top_k | 10 | int | The top k GO terms and their probabilities to output as predictions. |
-| --device | "cuda" | str | The device to run the computation on ("cuda", "cuda:1", "mps", "cpu", etc). |
-| --seed | None | int | The seed for the random number generator. |
-
-## GO Subgraph Prediction
-
-We can also infer the gene ontology subgraph of a particular sequence. The `predict-subgraph.py` script outputs a graphical representation of the predictions where green nodes have high probability and pink nodes have low probability.
-
-```sh
-python predict-subgraph.py --checkpoint_path="./checkpoints/checkpoint.pt" --top_p=0.1
-```
-
-```sh
-Checkpoint loaded successfully
-Enter a sequence: NMPNERLKWLMLFAAVALIACGSQTLAANPPDADQKGPVFLKEPTNRIDFSNSTG...
-```
-
-![Example GO Subgraph](https://raw.githubusercontent.com/andrewdalpino/esm2-function-classifier/master/docs/images/Q0E9J9-mf.png)
-
-### Subgraph Arguments
-
-| Argument | Default | Type | Description |
-|---|---|---|---|
-| --checkpoint_path | "./checkpoints/checkpoint.pt" | str | The path to the training checkpoint. |
-| --context_length | 1026 | int | The maximum length of the input sequences. |
-| --top_p | 0.5 | float | Only display nodes with the top p probability. |
 | --device | "cuda" | str | The device to run the computation on ("cuda", "cuda:1", "mps", "cpu", etc). |
 | --seed | None | int | The seed for the random number generator. |
 
