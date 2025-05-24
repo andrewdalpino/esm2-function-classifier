@@ -7,6 +7,7 @@ import torch
 
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
+from torch.backends.mps import is_available as mps_is_available
 from torch.cuda import is_available as cuda_is_available, is_bf16_supported
 from torch.amp import autocast
 from torch.nn.utils import clip_grad_norm_
@@ -89,6 +90,9 @@ def main():
 
     if "cuda" in args.device and not cuda_is_available():
         raise RuntimeError("Cuda is not available.")
+    
+    if "mps" in args.device and not mps_is_available():
+        raise RuntimeError("MPS is not available.")
 
     torch.set_float32_matmul_precision("high")
 
@@ -122,7 +126,7 @@ def main():
     new_dataloader = partial(
         DataLoader,
         batch_size=args.batch_size,
-        pin_memory="cpu" not in args.device,
+        pin_memory=all(device not in args.device for device in ("cpu", "mps")),
         num_workers=args.num_dataset_processes,
     )
 
@@ -148,8 +152,10 @@ def main():
             for param in module.parameters():
                 param.requires_grad = True
 
-    print("Compiling model ...")
-    model = torch.compile(model)
+    if "cuda" in args.device:
+        model = torch.compile(model)
+
+        print("Model compiled")
 
     model = model.to(args.device)
 
