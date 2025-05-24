@@ -79,8 +79,8 @@ def main():
 
     plot_subgraph = partial(
         nx.draw_networkx,
-        node_size=3000,
-        font_size=10,
+        node_size=2000,
+        font_size=9,
         cmap="PiYG",
         vmin=0,
         vmax=1,
@@ -114,7 +114,9 @@ def main():
                 if probability > args.top_p
             }
 
-            subgraph = graph.subgraph(go_term_probabilities.keys())
+            go_terms = go_term_probabilities.keys()
+
+            subgraph = graph.subgraph(go_terms)
 
             probabilities = {
                 go_term: go_term_probabilities[go_term] for go_term in subgraph.nodes()
@@ -131,7 +133,10 @@ def main():
                             probabilities[descendant],
                         )
 
-            labels = {go_term: name for go_term, name in subgraph.nodes(data="name")}
+            labels = {
+                go_term: f"{go_term}\n{data["name"]}"
+                for go_term, data in subgraph.nodes(data=True)
+            }
 
             plt.figure(figsize=(10, 8))
             plt.title("Gene Ontology Subgraph")
