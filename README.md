@@ -25,7 +25,7 @@ The following pretrained models are available on HuggingFace Hub.
 
 ### Using a Pretrained Model
 
-Since the HuggingFace [Transformers](https://github.com/huggingface/transformers) library supports the ESM architecture natively, we can start protein function calling quickly in just a few lines of code. Check out the `import-pretrained.ipynb` notebook for a more detailed example with GO term ranking.
+Since the HuggingFace [Transformers](https://github.com/huggingface/transformers) library supports the [ESM](https://huggingface.co/docs/transformers/en/model_doc/esm) architecture natively, we can start protein function calling quickly in just a few lines of code. Check out the `import-pretrained.ipynb` notebook for a more detailed example with GO term ranking.
 
 ```python
 from transformers import EsmTokenizer, EsmForSequenceClassification
@@ -93,12 +93,12 @@ python fine-tune.py --checkpoint_path="./checkpoints/checkpoint.pt" --resume
 | --dataset_subset | "all" | str | The subset of the dataset to train on, choose from `all`, `mf` for molecular function, `cc` for cellular component, or `bp` for biological process. |
 | --num_dataset_processes | 1 | int | The number of CPU processes to use to process and load samples. |
 | --context_length | 1026 | int | The maximum length of the input sequences. |
-| --filter_long_sequences | False | Should we filter sequences that are longer than the context length from the training set? |
+| --filter_long_sequences | False | bool | Should we filter sequences that are longer than the context length from the training set? |
 | --unfreeze_last_k_layers | 0 | int | Fine-tune the last k layers of the pre-trained encoder. |
 | --batch_size | 16 | int | The number of samples to pass through the network at a time. |
 | --gradient_accumulation_steps | 4 | int | The number of batches to pass through the network before updating the weights. |
 | --max_gradient_norm | 1.0 | float | Clip gradients above this threshold norm before stepping. |
-| --learning_rate | 1e-4 | float | The learning rate of the Adam optimizer. |
+| --learning_rate | 5e-4 | float | The learning rate of the Adam optimizer. |
 | --num_epochs | 30 | int | The number of epochs to train for. |
 | --eval_interval | 2 | int | Evaluate the model after this many epochs on the testing set. |
 | --checkpoint_interval | 2 | int | Save the model parameters to disk every this many epochs. |
