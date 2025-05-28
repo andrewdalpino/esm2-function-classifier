@@ -90,7 +90,7 @@ def main():
 
     if "cuda" in args.device and not cuda_is_available():
         raise RuntimeError("Cuda is not available.")
-    
+
     if "mps" in args.device and not mps_is_available():
         raise RuntimeError("MPS is not available.")
 

@@ -125,11 +125,11 @@ def main():
             # Fix up the probabilities by exploiting the DAG hierarchy.
             if nx.is_directed_acyclic_graph(subgraph):
                 for node in subgraph.nodes():
-                    child_probability = probabilities[node]
+                    parent_probability = probabilities[node]
 
                     for descendant in nx.descendants(subgraph, node):
                         probabilities[descendant] = max(
-                            child_probability,
+                            parent_probability,
                             probabilities[descendant],
                         )
 
