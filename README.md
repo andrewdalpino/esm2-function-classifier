@@ -16,9 +16,9 @@ The following pretrained models are available on HuggingFace Hub.
 
 | Name | Embedding Dim. | Attn. Heads | Encoder Layers | Context Length | Total Parameters |
 |---|---|---|---|---|---|
-| [andrewdalpino/ESM2-35M-Protein-Biological-Process](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Biological-Process) | 480 | 20 | 12 | 1026 | 44M |
-| [andrewdalpino/ESM2-35M-Protein-Molecular-Function](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Molecular-Function) | 480 | 20 | 12 | 1026 | 37M |
-| [andrewdalpino/ESM2-35M-Protein-Cellular-Component](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Cellular-Component) | 480 | 20 | 12 | 1026 | 35M |
+| [andrewdalpino/ESM2-35M-Protein-Biological-Process](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Biological-Process) | 480 | 20 | 12 | 2048 | 44M |
+| [andrewdalpino/ESM2-35M-Protein-Molecular-Function](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Molecular-Function) | 480 | 20 | 12 | 2048 | 37M |
+| [andrewdalpino/ESM2-35M-Protein-Cellular-Component](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Cellular-Component) | 480 | 20 | 12 | 2048 | 35M |
 | [andrewdalpino/ESM2-150M-Protein-Biological-Process](https://huggingface.co/andrewdalpino/ESM2-150M-Protein-Biological-Process) | 640 | 20 | 30 | 1026 | 162M |
 | [andrewdalpino/ESM2-150M-Protein-Molecular-Function](https://huggingface.co/andrewdalpino/ESM2-150M-Protein-Molecular-Function) | 640 | 20 | 30 | 1026 | 153M |
 | [andrewdalpino/ESM2-150M-Protein-Cellular-Component](https://huggingface.co/andrewdalpino/ESM2-150M-Protein-Cellular-Component) | 640 | 20 | 30 | 1026 | 151M |
