@@ -2,6 +2,7 @@ datasets==3.6.0
 torch==2.7.0
 torchmetrics==1.5.1
 transformers==4.49.0
+optimum==1.25.3
 tensorboard==2.19.0
 obonet==1.1.1
 networkx==3.4.2
