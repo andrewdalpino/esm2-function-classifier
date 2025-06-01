@@ -18,7 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from transformers import EsmTokenizer, EsmConfig, EsmForSequenceClassification
 
-from data import CAFA5
+from data import CAFA5, AmiGO
 
 from tqdm import tqdm
 
@@ -113,7 +113,7 @@ def main():
     tokenizer = EsmTokenizer.from_pretrained(args.base_model)
 
     new_dataset = partial(
-        CAFA5,
+        AmiGO,
         subset=args.dataset_subset,
         tokenizer=tokenizer,
         context_length=args.context_length,
