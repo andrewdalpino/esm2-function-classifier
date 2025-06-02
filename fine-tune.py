@@ -268,13 +268,18 @@ def main():
             # Find the optimal threshold (you can adjust beta to emphasize precision or recall)
             optimal_threshold = pr_curve.get_optimal_threshold(beta=1.0)
 
+            # Compute FMax (F1 score at optimal threshold)
+            f_max = (2 * precision * recall) / (precision + recall + 1e-10)
+            f_max = f_max.max()
+
             # Log the curve to tensorboard
             for t, p, r in zip(thresholds, precision, recall):
                 logger.add_scalar('Precision/Threshold', p, t)
                 logger.add_scalar('Recall/Threshold', r, t)
 
-            # Log the optimal threshold
+            # Log the optimal threshold and FMax
             logger.add_scalar('Optimal_Threshold', optimal_threshold, epoch)
+            logger.add_scalar('FMax', f_max, epoch)
 
             if excess_graph_components is not None:
                 # Compute the excess number of disconnected graph components
