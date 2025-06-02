@@ -18,7 +18,7 @@ CC_ROOT_ID = 'GO:0005575'
 BP_ROOT_ID = 'GO:0008150'
 
 
-class GoWrapper:
+class GOGraph:
     """
     A wrapper for the the GO ontology that constructs a graph from the GO OBO file.
     It provides methods to construct the GO graph, compute various GO-related metrics,

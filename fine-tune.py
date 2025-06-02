@@ -2,6 +2,7 @@ import random
 
 from argparse import ArgumentParser
 from functools import partial
+from tqdm import tqdm
 
 import torch
 
@@ -12,15 +13,16 @@ from torch.cuda import is_available as cuda_is_available, is_bf16_supported
 from torch.amp import autocast
 from torch.nn.utils import clip_grad_norm_
 
-from torchmetrics.classification import BinaryPrecision, BinaryRecall
+from torchmetrics.classification import BinaryPrecision, BinaryRecall, PrecisionRecallCurve
 
 from torch.utils.tensorboard import SummaryWriter
 
 from transformers import EsmTokenizer, EsmConfig, EsmForSequenceClassification
 
 from data import CAFA5
+from go_wrapper import GOGraph
+from metrics import ExcessGraphComponents, PrecisionRecallCurve
 
-from tqdm import tqdm
 
 
 AVAILABLE_BASE_MODELS = {
@@ -64,6 +66,7 @@ def main():
     parser.add_argument("--run_dir_path", default="./runs", type=str)
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seed", default=None, type=int)
+    parser.add_argument("--go_graph_path", default="", type=str)
 
     args = parser.parse_args()
 
@@ -87,6 +90,11 @@ def main():
         raise ValueError(
             f"Checkpoint interval must be greater than 0, {args.checkpoint_interval} given."
         )
+    
+    if args.go_graph_path == "":
+        go_graph = None
+    else:
+        go_graph = GOGraph(args.go_graph_path, discard_go_dag=True)
 
     if "cuda" in args.device and not cuda_is_available():
         raise RuntimeError("Cuda is not available.")
@@ -161,8 +169,11 @@ def main():
 
     optimizer = AdamW(model.parameters(), lr=args.learning_rate)
 
-    precision_metric = BinaryPrecision().to(args.device)
-    recall_metric = BinaryRecall().to(args.device)
+    pr_curve = PrecisionRecallCurve(task='binary', num_thresholds=100).to(args.device)
+    if go_graph is not None:
+        excess_graph_components = ExcessGraphComponents(go_graph).to(args.device)
+    else:
+        excess_graph_components = None
 
     starting_epoch = 1
 
@@ -236,33 +247,40 @@ def main():
             for x, y, attn_mask in tqdm(test_loader, desc="Testing", leave=False):
                 x = x.to(args.device, non_blocking=True)
                 y = y.to(args.device, non_blocking=True)
-
                 attn_mask = attn_mask.to(args.device, non_blocking=True)
 
                 with torch.no_grad():
                     out = model.forward(x, attention_mask=attn_mask)
-
                     y_prob = torch.sigmoid(out.logits)
+                    pr_curve.update(y_prob, y)
+                               # Turn the predictions into a list of GO terms so we can analyze using the GO graph
+                    pred_go_terms = []
+                    for i in range(len(y_prob)):
+                        pred_go_terms.append(testing.label_indices_to_terms[torch.argmax(y_prob[i])])
+                    
+                    if excess_graph_components is not None:
+                        # Compute the excess number of disconnected graph components
+                        excess_graph_components.update(pred_go_terms)
 
-                precision_metric.update(y_prob, y)
-                recall_metric.update(y_prob, y)
+            # Generate the precision-recall curve
+            thresholds, precision, recall = pr_curve.compute()
 
-            precision = precision_metric.compute()
-            recall = recall_metric.compute()
+            # Find the optimal threshold (you can adjust beta to emphasize precision or recall)
+            optimal_threshold = pr_curve.get_optimal_threshold(beta=1.0)
 
-            f1_score = (2 * precision * recall) / (precision + recall)
+            # Log the curve to tensorboard
+            for t, p, r in zip(thresholds, precision, recall):
+                logger.add_scalar('Precision/Threshold', p, t)
+                logger.add_scalar('Recall/Threshold', r, t)
 
-            logger.add_scalar("F1 Score", f1_score, epoch)
-            logger.add_scalar("Precision", precision, epoch)
-            logger.add_scalar("Recall", recall, epoch)
+            # Log the optimal threshold
+            logger.add_scalar('Optimal_Threshold', optimal_threshold, epoch)
 
-            print(
-                f"F1: {f1_score:.3f}, Precision: {precision:.3f}, Recall: {recall:.3f}"
-            )
-
-            precision_metric.reset()
-            recall_metric.reset()
-
+            if excess_graph_components is not None:
+                # Compute the excess number of disconnected graph components
+                excess_components = excess_graph_components.compute()
+                logger.add_scalar('Excess_Graph_Components', excess_components, epoch)
+ 
             model.train()
 
         if epoch % args.checkpoint_interval == 0:
