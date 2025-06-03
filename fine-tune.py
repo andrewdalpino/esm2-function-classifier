@@ -18,7 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from transformers import EsmTokenizer, EsmConfig, EsmForSequenceClassification
 
-from data import CAFA5, AmiGO
+from data import AmiGO
 
 from tqdm import tqdm
 
@@ -44,7 +44,7 @@ def main():
         choices=AVAILABLE_BASE_MODELS,
     )
     parser.add_argument(
-        "--dataset_subset", default="all", choices=CAFA5.AVAILABLE_SUBSETS
+        "--dataset_subset", default="all", choices=AmiGO.AVAILABLE_SUBSETS
     )
     parser.add_argument("--num_dataset_processes", default=1, type=int)
     parser.add_argument("--context_length", default=1026, type=int)

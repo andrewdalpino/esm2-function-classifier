@@ -29,7 +29,7 @@ def main():
     )
     parser.add_argument("--go_db_path", default="./dataset/go-basic.obo", type=str)
     parser.add_argument("--context_length", default=1026, type=int)
-    parser.add_argument("--top_p", default=0.4, type=float)
+    parser.add_argument("--top_p", default=0.5, type=float)
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seed", default=None, type=int)
 

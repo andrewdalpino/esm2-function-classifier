@@ -1,6 +1,6 @@
 # ESM2 Protein Function Caller
 
-An Evolutionary-scale Model (ESM) for protein function calling from amino acid sequences. Based on the ESM2 Transformer architecture and fine-tuned on the [CAFA 5](https://huggingface.co/datasets/andrewdalpino/CAFA5) dataset, this model predicts the gene ontology (GO) terms for a particular protein sequence - giving you insight into the molecular function, biological process, and location of the activity inside the cell. It does so by solving a massive multi-label binary classification objective which allows for both GO term ranking and subgraph prediction.
+An Evolutionary-scale Model (ESM) for protein function prediction from amino acid sequences using the Gene Ontology (GO). Based on the ESM2 Transformer architecture, pre-trained on [UniRef50](https://www.uniprot.org/help/uniref), and fine-tuned on the [AmiGO](https://huggingface.co/datasets/andrewdalpino/AmiGO) dataset, this model predicts the GO subgraph for a particular protein sequence - giving you insight into the molecular function, biological process, and location of the activity inside the cell.
 
 ## What are GO terms?
 
@@ -16,9 +16,9 @@ The following pretrained models are available on HuggingFace Hub.
 
 | Name | Embedding Dim. | Attn. Heads | Encoder Layers | Context Length | Total Parameters |
 |---|---|---|---|---|---|
-| [andrewdalpino/ESM2-35M-Protein-Biological-Process](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Biological-Process) | 480 | 20 | 12 | 2048 | 44M |
-| [andrewdalpino/ESM2-35M-Protein-Molecular-Function](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Molecular-Function) | 480 | 20 | 12 | 2048 | 37M |
-| [andrewdalpino/ESM2-35M-Protein-Cellular-Component](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Cellular-Component) | 480 | 20 | 12 | 2048 | 35M |
+| [andrewdalpino/ESM2-35M-Protein-Biological-Process](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Biological-Process) | 480 | 20 | 12 | 1026 | 44M |
+| [andrewdalpino/ESM2-35M-Protein-Molecular-Function](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Molecular-Function) | 480 | 20 | 12 | 1026 | 37M |
+| [andrewdalpino/ESM2-35M-Protein-Cellular-Component](https://huggingface.co/andrewdalpino/ESM2-35M-Protein-Cellular-Component) | 480 | 20 | 12 | 1026 | 35M |
 | [andrewdalpino/ESM2-150M-Protein-Biological-Process](https://huggingface.co/andrewdalpino/ESM2-150M-Protein-Biological-Process) | 640 | 20 | 30 | 1026 | 162M |
 | [andrewdalpino/ESM2-150M-Protein-Molecular-Function](https://huggingface.co/andrewdalpino/ESM2-150M-Protein-Molecular-Function) | 640 | 20 | 30 | 1026 | 153M |
 | [andrewdalpino/ESM2-150M-Protein-Cellular-Component](https://huggingface.co/andrewdalpino/ESM2-150M-Protein-Cellular-Component) | 640 | 20 | 30 | 1026 | 151M |
@@ -35,8 +35,6 @@ model_name = "andrewdalpino/ESM2-35M-Protein-Molecular-Function"
 tokenizer = EsmTokenizer.from_pretrained(model_name)
 
 model = EsmForSequenceClassification.from_pretrained(model_name)
-
-# ... then tokenize AA sequences and rank GO terms
 ```
 
 ## Install Project Dependencies
@@ -55,7 +53,7 @@ pip install -r requirements.txt
 
 The Evolutionary-scale Model (ESM) architecture is a Transformer protein sequence model. It was pre-trained using the masked token objective on the [UniProt](https://www.uniprot.org/) dataset, a massive set of protein sequences. Our objective is to fine-tune the base model to predict the gene ontology subgraph for a given protein sequence.
 
-We'll be fine-tuning the pre-trained ESM2 model with a multi-label binary classification head on the CAFA 5 dataset of GO term-annotated protein sequences. To begin training with the default arguments, you can enter the command below.
+We'll be fine-tuning the pre-trained ESM2 model with a multi-label binary classification head on the AmiGO dataset of GO term-annotated protein sequences. To begin training with the default arguments, you can enter the command below.
 
 ```sh
 python fine-tune.py
@@ -137,47 +135,14 @@ Enter a sequence: NMPNERLKWLMLFAAVALIACGSQTLAANPPDADQKGPVFLKEPTNRIDFSNSTG...
 |---|---|---|---|
 | --checkpoint_path | "./checkpoints/checkpoint.pt" | str | The path to the training checkpoint. |
 | --context_length | 1026 | int | The maximum length of the input sequences. |
-| --top_p | 0.5 | float | Only display nodes with the top p probability. |
+| --top_p | 0.5 | float | Only display nodes with the top `p` probability. |
 | --device | "cuda" | str | The device to run the computation on ("cuda", "cuda:1", "mps", "cpu", etc). |
 | --seed | None | int | The seed for the random number generator. |
 
-## GO Term Ranking
-
-We provide a prediction script for sampling the top k GO terms inferred by the model.
-
-```sh
-python predict-rank.py --checkpoint_path="./checkpoints/checkpoint.pt" --top_k=20
-```
-
-You will be asked to enter a protein sequence to predict like in the example below.
-
-```sh
-Checkpoint loaded successfully
-Enter a sequence: MASMAGVGGGSGKRVPPTRVWWRLYEFALGLLGVVFFAAAATSGKTSRLVSVLIG...
-
-Top 20 GO Terms:
-0.6195: cellular anatomical entity
-0.5855: cellular_component
-0.4599: cell periphery
-0.4597: membrane
-0.3749: plasma membrane
-...
-```
-
-### Ranking Arguments
-
-| Argument | Default | Type | Description |
-|---|---|---|---|
-| --checkpoint_path | "./checkpoints/checkpoint.pt" | str | The path to the training checkpoint. |
-| --context_length | 1026 | int | The maximum length of the input sequences. |
-| --top_k | 10 | int | The top k GO terms and their probabilities to output as predictions. |
-| --device | "cuda" | str | The device to run the computation on ("cuda", "cuda:1", "mps", "cpu", etc). |
-| --seed | None | int | The seed for the random number generator. |
 
 ## References:
 
 >- A. Rives, et al. Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences, 2021.
 >- Z. Lin, et al. Evolutionary-scale prediction of atomic level protein structure with a language model, 2022.
 >- G. A. Merino, et al. Hierarchical deep learning for predicting GO annotations by integrating protein knowledge, 2022.
->- I. Friedberg, et al. CAFA 5 Protein Function Prediction. https://kaggle.com/competitions/cafa-5-protein-function-prediction, 2023.
 >- M. Ashburner, et al. Gene Ontology: tool for the unification of biology, 2000.
