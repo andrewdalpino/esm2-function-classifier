@@ -53,6 +53,12 @@ def main():
         torch.manual_seed(args.seed)
         random.seed(args.seed)
 
+    graph = obonet.read_obo(args.go_db_path)
+
+    assert nx.is_directed_acyclic_graph(graph), "Invalid GO graph, use basic DAG."
+
+    print("Gene Ontology graph loaded successfully.")
+
     checkpoint = torch.load(
         args.checkpoint_path, map_location="cpu", weights_only=False
     )
@@ -73,10 +79,6 @@ def main():
     model.eval()
 
     print("Checkpoint loaded successfully.")
-
-    graph = obonet.read_obo(args.go_db_path)
-
-    assert nx.is_directed_acyclic_graph(graph), "Invalid GO graph, use basic DAG."
 
     plot_subgraph = partial(
         nx.draw_networkx,
