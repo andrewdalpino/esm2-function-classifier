@@ -133,6 +133,7 @@ Enter a sequence: MPNERLKWLMLFAAVALIACGSQTLAANPPDADQKGPVFLKEPTNRIDFSNSTG
 | Argument | Default | Type | Description |
 |---|---|---|---|
 | --checkpoint_path | "./checkpoints/checkpoint.pt" | str | The path to the training checkpoint. |
+| --go_db_path | "./dataset/go-basic.obo" | str | The path to the Gene Ontology basic obo file. |
 | --context_length | 1026 | int | The maximum length of the input sequences. |
 | --top_p | 0.5 | float | Only display nodes with the top `p` probability. |
 | --device | "cuda" | str | The device to run the computation on ("cuda", "cuda:1", "mps", "cpu", etc). |

@@ -116,7 +116,6 @@ def main():
         subset=args.dataset_subset,
         tokenizer=tokenizer,
         context_length=args.context_length,
-        filter_long_sequences=args.filter_long_sequences,
     )
 
     training = new_dataset(split="train")
