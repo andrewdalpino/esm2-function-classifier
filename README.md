@@ -91,7 +91,6 @@ python fine-tune.py --checkpoint_path="./checkpoints/checkpoint.pt" --resume
 | --dataset_subset | "all" | str | The subset of the dataset to train on, choose from `all`, `mf` for molecular function, `cc` for cellular component, or `bp` for biological process. |
 | --num_dataset_processes | 1 | int | The number of CPU processes to use to process and load samples. |
 | --context_length | 1026 | int | The maximum length of the input sequences. |
-| --filter_long_sequences | False | bool | Should we filter sequences that are longer than the context length from the training set? |
 | --unfreeze_last_k_layers | 0 | int | Fine-tune the last k layers of the pre-trained encoder. |
 | --batch_size | 16 | int | The number of samples to pass through the network at a time. |
 | --gradient_accumulation_steps | 4 | int | The number of batches to pass through the network before updating the weights. |
@@ -102,7 +101,7 @@ python fine-tune.py --checkpoint_path="./checkpoints/checkpoint.pt" --resume
 | --checkpoint_interval | 2 | int | Save the model parameters to disk every this many epochs. |
 | --checkpoint_path | "./checkpoints/checkpoint.pt" | string | The path to the training checkpoint. |
 | --resume | False | bool | Should we resume training from the last checkpoint? |
-| --run_dir_path | "./runs/instruction-tune" | str | The path to the TensorBoard run directory for this training session. |
+| --run_dir_path | "./runs" | str | The path to the TensorBoard run directory for this training session. |
 | --device | "cuda" | str | The device to run the computation on ("cuda", "cuda:1", "mps", "cpu", etc). |
 | --seed | None | int | The seed for the random number generator. |
 
@@ -124,7 +123,7 @@ python predict-subgraph.py --checkpoint_path="./checkpoints/checkpoint.pt" --top
 
 ```sh
 Checkpoint loaded successfully
-Enter a sequence: NMPNERLKWLMLFAAVALIACGSQTLAANPPDADQKGPVFLKEPTNRIDFSNSTG...
+Enter a sequence: MPNERLKWLMLFAAVALIACGSQTLAANPPDADQKGPVFLKEPTNRIDFSNSTG
 ```
 
 ![Example GO Subgraph](https://raw.githubusercontent.com/andrewdalpino/esm2-function-classifier/master/docs/images/Q0E9J9-mf.png)

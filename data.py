@@ -27,7 +27,6 @@ class AmiGO(Dataset):
         split: str,
         tokenizer: EsmTokenizer,
         context_length: int,
-        filter_long_sequences: bool = False,
     ):
         super().__init__()
 
@@ -43,11 +42,6 @@ class AmiGO(Dataset):
             )
 
         dataset = load_dataset(self.DATASET_NAME, subset)
-
-        if filter_long_sequences:
-            dataset = dataset.filter(
-                lambda sample: sample["length"] <= context_length - 2
-            )
 
         terms_to_label_indices = {}
 
