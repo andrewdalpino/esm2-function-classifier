@@ -25,7 +25,7 @@ The following pretrained models are available on HuggingFace Hub.
 
 ### Using a Pretrained Model
 
-Since the HuggingFace [Transformers](https://github.com/huggingface/transformers) library supports the [ESM](https://huggingface.co/docs/transformers/en/model_doc/esm) architecture natively, we can start protein function calling quickly in just a few lines of code. Check out the `import-pretrained.ipynb` notebook for a more detailed example with GO term ranking.
+Since the HuggingFace [Transformers](https://github.com/huggingface/transformers) library supports the [ESM](https://huggingface.co/docs/transformers/en/model_doc/esm) architecture natively, we can start protein function calling quickly in just a few lines of code.
 
 ```python
 from transformers import EsmTokenizer, EsmForSequenceClassification

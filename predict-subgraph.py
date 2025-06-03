@@ -1,5 +1,6 @@
 import random
 from functools import partial
+from copy import copy
 
 from argparse import ArgumentParser
 
@@ -114,24 +115,24 @@ def main():
                 if probability > args.top_p
             }
 
-            go_terms = go_term_probabilities.keys()
+            # Fix up the predictions by leveraging the GO DAG hierarchy.
+            for go_term, parent_probability in copy(go_term_probabilities).items():
+                for descendant in nx.descendants(graph, go_term):
+                    if descendant in go_term_probabilities:
+                        child_probability = go_term_probabilities[descendant]
+                    else:
+                        child_probability = 0.0
 
-            subgraph = graph.subgraph(go_terms)
+                    go_term_probabilities[descendant] = max(
+                        parent_probability,
+                        child_probability,
+                    )
 
-            probabilities = {
-                go_term: go_term_probabilities[go_term] for go_term in subgraph.nodes()
-            }
+            subgraph = graph.subgraph(go_term_probabilities.keys())
 
-            # Fix up the probabilities by exploiting the DAG hierarchy.
-            if nx.is_directed_acyclic_graph(subgraph):
-                for node in subgraph.nodes():
-                    parent_probability = probabilities[node]
-
-                    for descendant in nx.descendants(subgraph, node):
-                        probabilities[descendant] = max(
-                            parent_probability,
-                            probabilities[descendant],
-                        )
+            color_intensities = [
+                go_term_probabilities[go_term] for go_term in subgraph.nodes()
+            ]
 
             labels = {
                 go_term: f"{go_term}\n{data["name"]}"
@@ -143,7 +144,7 @@ def main():
 
             plot_subgraph(
                 subgraph,
-                node_color=probabilities.values(),
+                node_color=color_intensities,
                 labels=labels,
             )
 
