@@ -9,18 +9,13 @@ from torch.utils.data import Dataset
 from transformers import EsmTokenizer
 
 
-class CAFA5(Dataset):
+class AmiGO(Dataset):
     """
-    The CAFA5 dataset is a collection of protein sequences and their associated gene oncology terms.
-    It is used for training and evaluating models for protein function prediction.
-
-    The dataset is divided into three subsets based on the type of gene ontology terms:
-    1. Molecular Function (MF)
-    2. Cellular Component (CC)
-    3. Biological Process (BP)
+    A collection of high-quality protein sequences and their associated gene ontology terms
+    taken from the SwissProt subsection of the UniProt database.
     """
 
-    DATASET_NAME = "andrewdalpino/CAFA5"
+    DATASET_NAME = "andrewdalpino/AmiGO"
 
     AVAILABLE_SUBSETS = {"all", "mf", "cc", "bp"}
 
@@ -32,7 +27,6 @@ class CAFA5(Dataset):
         split: str,
         tokenizer: EsmTokenizer,
         context_length: int,
-        filter_long_sequences: bool = False,
     ):
         super().__init__()
 
@@ -49,18 +43,13 @@ class CAFA5(Dataset):
 
         dataset = load_dataset(self.DATASET_NAME, subset)
 
-        if filter_long_sequences:
-            dataset = dataset.filter(
-                lambda sample: sample["length"] <= context_length - 2
-            )
-
         terms_to_label_indices = {}
 
         label_index = 0
 
         for subset in dataset.values():
             for sample in subset:
-                for term in sample["terms"]:
+                for term in sample["go_terms"]:
                     if term not in terms_to_label_indices:
                         terms_to_label_indices[term] = label_index
 
@@ -100,7 +89,7 @@ class CAFA5(Dataset):
 
         labels = [0.0] * self.num_classes
 
-        for term in sample["terms"]:
+        for term in sample["go_terms"]:
             label_index = self.terms_to_label_indices[term]
 
             labels[label_index] = 1.0

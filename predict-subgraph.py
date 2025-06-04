@@ -1,5 +1,6 @@
 import random
 from functools import partial
+from copy import copy
 
 from argparse import ArgumentParser
 
@@ -29,7 +30,7 @@ def main():
     )
     parser.add_argument("--go_db_path", default="./dataset/go-basic.obo", type=str)
     parser.add_argument("--context_length", default=1026, type=int)
-    parser.add_argument("--top_p", default=0.4, type=float)
+    parser.add_argument("--top_p", default=0.5, type=float)
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seed", default=None, type=int)
 
@@ -52,6 +53,12 @@ def main():
         torch.manual_seed(args.seed)
         random.seed(args.seed)
 
+    graph = obonet.read_obo(args.go_db_path)
+
+    assert nx.is_directed_acyclic_graph(graph), "Invalid GO graph, use basic DAG."
+
+    print("Gene Ontology graph loaded successfully.")
+
     checkpoint = torch.load(
         args.checkpoint_path, map_location="cpu", weights_only=False
     )
@@ -72,10 +79,6 @@ def main():
     model.eval()
 
     print("Checkpoint loaded successfully.")
-
-    graph = obonet.read_obo(args.go_db_path)
-
-    assert nx.is_directed_acyclic_graph(graph), "Invalid GO graph."
 
     plot_subgraph = partial(
         nx.draw_networkx,
@@ -114,24 +117,24 @@ def main():
                 if probability > args.top_p
             }
 
-            go_terms = go_term_probabilities.keys()
+            # Fix up the predictions by leveraging the GO DAG hierarchy.
+            for go_term, parent_probability in copy(go_term_probabilities).items():
+                for descendant in nx.descendants(graph, go_term):
+                    if descendant in go_term_probabilities:
+                        child_probability = go_term_probabilities[descendant]
+                    else:
+                        child_probability = 0.0
 
-            subgraph = graph.subgraph(go_terms)
+                    go_term_probabilities[descendant] = max(
+                        parent_probability,
+                        child_probability,
+                    )
 
-            probabilities = {
-                go_term: go_term_probabilities[go_term] for go_term in subgraph.nodes()
-            }
+            subgraph = graph.subgraph(go_term_probabilities.keys())
 
-            # Fix up the probabilities by exploiting the DAG hierarchy.
-            if nx.is_directed_acyclic_graph(subgraph):
-                for node in subgraph.nodes():
-                    parent_probability = probabilities[node]
-
-                    for descendant in nx.descendants(subgraph, node):
-                        probabilities[descendant] = max(
-                            parent_probability,
-                            probabilities[descendant],
-                        )
+            color_intensities = [
+                go_term_probabilities[go_term] for go_term in subgraph.nodes()
+            ]
 
             labels = {
                 go_term: f"{go_term}\n{data["name"]}"
@@ -143,7 +146,7 @@ def main():
 
             plot_subgraph(
                 subgraph,
-                node_color=probabilities.values(),
+                node_color=color_intensities,
                 labels=labels,
             )
 

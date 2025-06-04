@@ -19,9 +19,10 @@ from torch.utils.tensorboard import SummaryWriter
 
 from transformers import EsmTokenizer, EsmConfig, EsmForSequenceClassification
 
-from data import CAFA5
+from data import AmiGO
 from go_wrapper import GOGraph
 from metrics import ExcessGraphComponents, PrecisionRecallCurve
+
 
 
 
@@ -46,11 +47,10 @@ def main():
         choices=AVAILABLE_BASE_MODELS,
     )
     parser.add_argument(
-        "--dataset_subset", default="all", choices=CAFA5.AVAILABLE_SUBSETS
+        "--dataset_subset", default="all", choices=AmiGO.AVAILABLE_SUBSETS
     )
     parser.add_argument("--num_dataset_processes", default=1, type=int)
     parser.add_argument("--context_length", default=1026, type=int)
-    parser.add_argument("--filter_long_sequences", action="store_true")
     parser.add_argument("--unfreeze_last_k_layers", default=0, type=int)
     parser.add_argument("--learning_rate", default=5e-4, type=float)
     parser.add_argument("--max_gradient_norm", default=1.0, type=float)
@@ -121,11 +121,10 @@ def main():
     tokenizer = EsmTokenizer.from_pretrained(args.base_model)
 
     new_dataset = partial(
-        CAFA5,
+        AmiGO,
         subset=args.dataset_subset,
         tokenizer=tokenizer,
         context_length=args.context_length,
-        filter_long_sequences=args.filter_long_sequences,
     )
 
     training = new_dataset(split="train")
