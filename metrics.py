@@ -1,9 +1,57 @@
 # pylint: disable=no-member
+import numpy as np
 import torch
 from torchmetrics import Metric
 from typing import Container
 
 from go_wrapper import GOGraph
+
+
+def compute_f_betas(precision: torch.Tensor, recall: torch.Tensor, device: torch.device, beta: float = 1.0, epsilon: float = 1e-10) -> torch.Tensor:
+    """
+    Compute the F-beta score for a matched pair of tensors of precision and recall.
+
+    Args:
+        precision: The precision tensor.
+        recall: The recall tensor.
+        device: The device to compute the F-beta score on.
+        beta: The beta parameter for the F-beta score.
+        epsilon: The epsilon parameter for the F-beta score (to avoid division by zero).
+    """
+    beta_squared = torch.tensor(beta**2).to(device)
+    epsilon = torch.tensor(epsilon).to(device)
+    return (torch.tensor(1).to(device) + beta_squared) * (precision * recall) / (beta_squared * precision + recall + epsilon)
+
+def apply_prob_threshold(all_probs: np.ndarray, threshold: float) -> np.ndarray:
+    """
+    Apply a probability threshold to a matrix of probabilities.
+
+    Args:
+        all_probs: The matrix of probabilities.
+        threshold: The threshold to apply.
+
+    Returns:
+        A boolean matrix indicating whether a given term index (column) is predicted to apply to each sample (row).
+    """
+    return all_probs >= threshold
+
+
+def get_predicted_go_terms(prediction_matrix: np.ndarray, label_indices_to_terms: dict[int, str]) -> list[list[str]]:
+    """
+    Get the predicted GO terms for a given prediction matrix.
+
+    Args:
+        prediction_matrix: A matrix of shape (num_samples, num_terms) where each entry is a boolean indicating whether the term is predicted to apply to the sample.
+        label_indices_to_terms: A dictionary mapping term indices to GO terms.
+
+    Returns:
+        A list of lists of predicted GO terms, one list per sample.
+    """
+    all_predicted_go_terms = []
+    for row in prediction_matrix:
+        predicted_go_terms = sorted([label_indices_to_terms[i] for i, is_predicted in enumerate(row) if is_predicted])
+        all_predicted_go_terms.append(predicted_go_terms)
+    return all_predicted_go_terms
 
 
 class SimplePrecision(Metric):
@@ -116,7 +164,7 @@ class PrecisionRecallCurve(Metric):
     This allows for plotting a precision-recall curve and finding the optimal threshold.
     """
     
-    def __init__(self, num_thresholds: int = 100, **kwargs):
+    def __init__(self, num_thresholds: int = 100, epsilon: float = 1e-10, **kwargs):
         """
         Initialize the metric.
         
@@ -128,12 +176,18 @@ class PrecisionRecallCurve(Metric):
         
         # Create evenly spaced thresholds between 0 and 1
         self.thresholds = torch.linspace(0, 1, num_thresholds)
+        self.epsilon = epsilon
         
         # Add state variables for each threshold
         self.add_state('true_positives', default=torch.zeros(num_thresholds), dist_reduce_fx='sum')
         self.add_state('false_positives', default=torch.zeros(num_thresholds), dist_reduce_fx='sum')
         self.add_state('false_negatives', default=torch.zeros(num_thresholds), dist_reduce_fx='sum')
     
+    @property
+    def epsilon_tensor(self) -> torch.Tensor:
+        """Get epsilon as a tensor on the current device"""
+        return torch.tensor(self.epsilon, device=self.device)
+ 
     def update(self, preds: torch.Tensor, target: torch.Tensor):
         """
         Update the metric state with new predictions and targets.
@@ -162,7 +216,7 @@ class PrecisionRecallCurve(Metric):
         self.false_positives.add_(false_positives)
         self.false_negatives.add_(false_negatives)
     
-    def compute(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def compute(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor,]:
         """
         Compute precision and recall for each threshold.
         
@@ -173,12 +227,12 @@ class PrecisionRecallCurve(Metric):
             - recall: Recall values for each threshold
         """
         # Compute precision and recall for each threshold
-        precision = self.true_positives / (self.true_positives + self.false_positives + 1e-10)
-        recall = self.true_positives / (self.true_positives + self.false_negatives + 1e-10)
+        precision = self.true_positives / (self.true_positives + self.false_positives + self.epsilon_tensor)
+        recall = self.true_positives / (self.true_positives + self.false_negatives + self.epsilon_tensor)
         
         return self.thresholds, precision, recall
     
-    def get_optimal_threshold(self, beta: float = 1.0) -> float:
+    def get_optimal_threshold(self, beta: float = 1.0) -> tuple[float, float]:
         """
         Find the threshold that maximizes the F-beta score.
         
@@ -192,11 +246,12 @@ class PrecisionRecallCurve(Metric):
         _, precision, recall = self.compute()
         
         # Compute F-beta score for each threshold
-        f_beta = (1 + beta**2) * (precision * recall) / (beta**2 * precision + recall + 1e-10)
+        f_betas = compute_f_betas(precision, recall, device=self.device, beta=beta, epsilon=self.epsilon)
         
         # Find threshold with maximum F-beta score
-        optimal_idx = f_beta.argmax()
-        return self.thresholds[optimal_idx].item() 
+        optimal_idx = f_betas.argmax()
+        f_max = f_betas[optimal_idx]
+        return self.thresholds[optimal_idx].item(), f_max.item()
     
 
 class ExcessGraphComponents(Metric):

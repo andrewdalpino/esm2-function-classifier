@@ -60,7 +60,7 @@ class AmiGO(Dataset):
 
         if filter_long_sequences:
             dataset = dataset.filter(
-                lambda sample: sample["length"] <= context_length - 2
+                lambda sample: len(sample["sequence"]) <= context_length - 2
             )
 
         dataset = dataset[split]
