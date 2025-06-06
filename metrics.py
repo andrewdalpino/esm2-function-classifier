@@ -47,11 +47,19 @@ def get_predicted_go_terms(prediction_matrix: np.ndarray, label_indices_to_terms
     Returns:
         A list of lists of predicted GO terms, one list per sample.
     """
-    all_predicted_go_terms = []
-    for row in prediction_matrix:
-        predicted_go_terms = sorted([label_indices_to_terms[i] for i, is_predicted in enumerate(row) if is_predicted])
-        all_predicted_go_terms.append(predicted_go_terms)
-    return all_predicted_go_terms
+    # Convert dictionary to array for faster lookup
+    terms_array = np.array([label_indices_to_terms[i] for i in range(len(label_indices_to_terms))])
+    
+    # Get indices where predictions are True
+    predicted_indices = np.where(prediction_matrix)[1]
+    
+    # Group indices by sample
+    sample_sizes = np.sum(prediction_matrix, axis=1)
+    split_indices = np.cumsum(sample_sizes[:-1])
+    grouped_indices = np.split(predicted_indices, split_indices)
+    
+    # Convert indices to terms and sort
+    return [sorted(terms_array[indices]) for indices in grouped_indices]
 
 
 class SimplePrecision(Metric):
@@ -211,6 +219,7 @@ class PrecisionRecallCurve(Metric):
         true_positives = (preds * target).sum(dim=(0, 2))  # [T]
         false_positives = (preds * (1 - target)).sum(dim=(0, 2))  # [T]
         false_negatives = ((1 - preds) * target).sum(dim=(0, 2))  # [T]
+
         # Update state variables
         self.true_positives.add_(true_positives)
         self.false_positives.add_(false_positives)
@@ -270,20 +279,21 @@ class ExcessGraphComponents(Metric):
         """
         super().__init__(**kwargs)
         
-        # Create evenly spaced thresholds between 0 and 1
         self.go_graph = go_graph
         
         # Add state variable
-        self.add_state('excess_components_per_term', default=torch.tensor(0), dist_reduce_fx='sum')
-    
-    def update(self, pred_go_terms: Container[str]):
+        self.add_state('excess_components_per_term', default=torch.tensor(0.0, dtype=torch.float32), dist_reduce_fx='sum')
+        self.add_state('num_samples', default=torch.tensor(0, dtype=torch.long)) # Our own accumulator for number of observations/samples
+
+    def update(self, pred_go_terms: Container[Container[str]]):
         """
         Update the metric state with new predicted GO terms.
         
         Args:
             pred_go_terms: A container of predicted GO terms.
         """
-        self.excess_components_per_term.add_(self.go_graph.compute_excess_components_per_term(pred_go_terms))
+        self.excess_components_per_term.add_(torch.tensor([self.go_graph.compute_excess_components_per_term(this_terms) for this_terms in pred_go_terms]).sum())
+        self.num_samples.add_(torch.tensor(len(pred_go_terms), dtype=torch.long, device=self.device))
     
     def compute(self) -> torch.Tensor:
         """
@@ -292,6 +302,4 @@ class ExcessGraphComponents(Metric):
         Returns:
             The mean number of excess components per term.
         """
-        return self.excess_components_per_term / self._num_observations
-    
-   
+        return self.excess_components_per_term / self.num_samples

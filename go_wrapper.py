@@ -230,7 +230,8 @@ class GOGraph:
                            edge_width: float=0.5,
                            node_color: str='lightblue',
                            edge_color: str='gray',
-                           label_size: float=6) -> Tuple[plt.Figure, plt.Axes]:
+                           label_size: float=6,
+                           label_y_offset: float=0.1) -> Tuple[plt.Figure, plt.Axes]:
         '''
         Plots a subgraph of G containing only the nodes in node_list and only 'CHILD' edges.
         '''
@@ -270,6 +271,9 @@ class GOGraph:
             pos=pos,
             ax=ax,
             labels=node_labels,
+            verticalalignment='bottom',
+            horizontalalignment='center',
+            # y_offset=label_y_offset,
             font_size=label_size
         )
         ax.set_axis_off()
@@ -288,7 +292,8 @@ class GOGraph:
                                             tp_color: str='green',
                                             fp_color: str='red',
                                             fn_color: str='blue',
-                                            edge_color: str='gray') -> Tuple[plt.Figure, plt.Axes]:
+                                            edge_color: str='gray',
+                                            label_y_offset: float=0.1) -> Tuple[plt.Figure, plt.Axes]:
         '''
         Plots a subgraph of the GO graph containing the nodes representing the true and predicted terms.
         The nodes are colored green, red, and blue (default colors) for true positives, false positives,
@@ -371,6 +376,9 @@ class GOGraph:
             pos=pos,
             ax=ax,
             labels=node_labels,
+            verticalalignment='bottom',
+            horizontalalignment='center',
+            # y_offset=label_y_offset,
             font_size=label_size
         )
         ax.set_axis_off()
