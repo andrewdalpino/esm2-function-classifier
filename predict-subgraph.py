@@ -109,48 +109,48 @@ def main():
         with torch.no_grad():
             outputs = model.forward(input_ids)
 
-            probabilities = torch.sigmoid(outputs.logits.squeeze(0))
+        probabilities = torch.sigmoid(outputs.logits.squeeze(0))
 
-            go_term_probabilities = {
-                config.id2label[index]: probability.item()
-                for index, probability in enumerate(probabilities)
-                if probability > args.top_p
-            }
+        go_term_probabilities = {
+            config.id2label[index]: probability.item()
+            for index, probability in enumerate(probabilities)
+            if probability > args.top_p
+        }
 
-            # Fix up the predictions by leveraging the GO DAG hierarchy.
-            for go_term, parent_probability in copy(go_term_probabilities).items():
-                for descendant in nx.descendants(graph, go_term):
-                    if descendant in go_term_probabilities:
-                        child_probability = go_term_probabilities[descendant]
-                    else:
-                        child_probability = 0.0
+        # Fix up the predictions by leveraging the GO DAG hierarchy.
+        for go_term, parent_probability in copy(go_term_probabilities).items():
+            for descendant in nx.descendants(graph, go_term):
+                if descendant in go_term_probabilities:
+                    child_probability = go_term_probabilities[descendant]
+                else:
+                    child_probability = 0.0
 
-                    go_term_probabilities[descendant] = max(
-                        parent_probability,
-                        child_probability,
-                    )
+                go_term_probabilities[descendant] = max(
+                    parent_probability,
+                    child_probability,
+                )
 
-            subgraph = graph.subgraph(go_term_probabilities.keys())
+        subgraph = graph.subgraph(go_term_probabilities.keys())
 
-            color_intensities = [
-                go_term_probabilities[go_term] for go_term in subgraph.nodes()
-            ]
+        color_intensities = [
+            go_term_probabilities[go_term] for go_term in subgraph.nodes()
+        ]
 
-            labels = {
-                go_term: f"{go_term}\n{data["name"]}"
-                for go_term, data in subgraph.nodes(data=True)
-            }
+        node_labels = {
+            go_term: f"{go_term}\n{data["name"]}"
+            for go_term, data in subgraph.nodes(data=True)
+        }
 
-            plt.figure(figsize=(10, 8))
-            plt.title("Gene Ontology Subgraph")
+        plt.figure(figsize=(10, 8))
+        plt.title("Gene Ontology Subgraph")
 
-            plot_subgraph(
-                subgraph,
-                node_color=color_intensities,
-                labels=labels,
-            )
+        plot_subgraph(
+            subgraph,
+            node_color=color_intensities,
+            labels=node_labels,
+        )
 
-            plt.show()
+        plt.show()
 
         if "y" not in input("Go again? (yes|no): ").lower():
             break
