@@ -140,19 +140,26 @@ class GOGraph:
     It provides methods to construct the GO graph, compute various GO-related metrics,
     propagate terms, and plot GO subgraphs in various ways.
 
+    The resulting networkx DiGraph is stored in the G attribute. Edges have an attribute "relationship_type" that
+    indicates the type of relationship between the nodes. "is_a" edges have relationship types "PARENT" (that is, if X "is_a" Y, then a
+    "PARENT" edge will exist from X to Y). Reciprocal edges with relationship type "CHILD" are included as well.
+    Other relationship types (currently "part_of", "regulates", "positively_regulates" and "negatively_regulates" for GO-basic)
+    defined in the OBO file are included by default.
+
     Args:
-        go_fpath: The path to the GO OBO file.
+        go_obo_fpath: The path to the GO OBO file.
         relationship_types_to_include: The relationship types to include in the graph. If None (default), includes all relationship types.
         namespaces_to_include: The namespaces to include in the graph. Default is all namespaces ('cellular_component', 'biological_process', 'molecular_function').
         exclude_obsolete: Whether to exclude obsolete terms from the graph. Default is True.
+
     """
-    def __init__(self, go_fpath: Union[Path, str], namespaces_to_include: Union[Container[str], None]=GO_BASIC_NAMESPACES,
+    def __init__(self, go_obo_fpath: Union[Path, str], namespaces_to_include: Union[Container[str], None]=GO_BASIC_NAMESPACES,
                  relationship_types_to_include: Union[Container[str], None]=None, 
                  exclude_obsolete: bool=True):
-        self.go_fpath = go_fpath
+        self.go_obo_fpath = go_obo_fpath
         self.exclude_obsolete = exclude_obsolete
 
-        self.header, obo_content = parse_obo_content(go_fpath)
+        self.header, obo_content = parse_obo_content(go_obo_fpath)
         print('Header', json.dumps(self.header, indent=2))
 
         if relationship_types_to_include:
