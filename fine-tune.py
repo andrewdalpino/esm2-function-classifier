@@ -299,7 +299,6 @@ def main():
             torch.save(checkpoint, args.checkpoint_path)
 
             print("Checkpoint saved")
-
     print("Done!")
 
 
