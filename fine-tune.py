@@ -149,7 +149,7 @@ def main():
 
     model = EsmForSequenceClassification.from_pretrained(args.base_model, config=config)
 
-    # Freeze the embeddings and encoder layers.
+    # Freeze the token embeddings and encoder layers.
     for param in model.esm.parameters():
         param.requires_grad = False
 
