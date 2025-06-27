@@ -1,6 +1,6 @@
-# ESM2 Protein Function Caller
+# ESM2 Protein Function Predictor
 
-An Evolutionary-scale Model (ESM) for protein function prediction from amino acid sequences using the Gene Ontology (GO). Based on the ESM2 Transformer architecture, pre-trained on [UniRef50](https://www.uniprot.org/help/uniref), and fine-tuned on the [AmiGO](https://huggingface.co/datasets/andrewdalpino/AmiGO) dataset, this model predicts the GO subgraph for a particular protein sequence - giving you insight into the molecular function, biological process, and location of the activity inside the cell.
+An Evolutionary-scale Model (ESM) for protein function prediction from amino acid sequences using the Gene Ontology (GO). Based on the ESM2 Transformer architecture, pre-trained on [UniRef50](https://www.uniprot.org/help/uniref), and fine-tuned on the [AmiGO](https://huggingface.co/datasets/andrewdalpino/AmiGO) protein function dataset, this model predicts the GO subgraph for a particular protein sequence - giving you insight into the molecular function, biological process, and location of the activity inside the cell.
 
 ## What are GO terms?
 
@@ -26,6 +26,10 @@ The following pretrained models are available on HuggingFace Hub.
 ### Using a Pretrained Model
 
 Since the HuggingFace [Transformers](https://github.com/huggingface/transformers) library supports the [ESM](https://huggingface.co/docs/transformers/en/model_doc/esm) architecture natively, we can start protein function calling quickly in just a few lines of code.
+
+```sh
+pip install transformers
+```
 
 ```python
 from transformers import EsmTokenizer, EsmForSequenceClassification
@@ -128,7 +132,7 @@ Enter a sequence: MPNERLKWLMLFAAVALIACGSQTLAANPPDADQKGPVFLKEPTNRIDFSNSTG
 
 ![Example GO Subgraph](https://raw.githubusercontent.com/andrewdalpino/esm2-function-classifier/master/docs/images/Q0E9J9-mf.png)
 
-### Subgraph Arguments
+### Prediction Arguments
 
 | Argument | Default | Type | Description |
 |---|---|---|---|
@@ -138,7 +142,6 @@ Enter a sequence: MPNERLKWLMLFAAVALIACGSQTLAANPPDADQKGPVFLKEPTNRIDFSNSTG
 | --top_p | 0.5 | float | Only display nodes with the top `p` probability. |
 | --device | "cuda" | str | The device to run the computation on ("cuda", "cuda:1", "mps", "cpu", etc). |
 | --seed | None | int | The seed for the random number generator. |
-
 
 ## References:
 
