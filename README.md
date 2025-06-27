@@ -29,6 +29,7 @@ You'll need the code in the repository to train the model. To clone the repo ont
 
 ```sh
 git clone https://github.com/andrewdalpino/esm2-function-classifier
+```
 
 ## Install Project Dependencies
 
