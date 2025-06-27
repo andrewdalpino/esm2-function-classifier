@@ -28,8 +28,7 @@ The following pretrained models are available on HuggingFace Hub.
 You'll need the code in the repository to train the model. To clone the repo onto your local machine enter the command like in the example below.
 
 ```sh
-git clone https://github.com/andrewdalpino/ESMC-Function-Classifier
-```
+git clone https://github.com/andrewdalpino/esm2-function-classifier
 
 ## Install Project Dependencies
 
