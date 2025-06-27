@@ -67,7 +67,7 @@ model = EsmForSequenceClassification.from_pretrained(model_name)
 
 ## Fine-tuning
 
-The Evolutionary-scale Model (ESM) architecture is a Transformer protein sequence model. It was pre-trained using the masked token objective on the [UniProt](https://www.uniprot.org/) dataset, a massive set of protein sequences. Our objective is to fine-tune the base model to predict the gene ontology subgraph for a given protein sequence.
+The Evolutionary-scale Model (ESM) architecture is a Transformer protein sequence model. Version 2 was pre-trained using the masked token objective on the [UniProt](https://www.uniprot.org/) dataset, a massive set of protein sequences. Our objective is to fine-tune the base model to predict the gene ontology subgraph for a given protein sequence.
 
 We'll be fine-tuning the pre-trained ESM2 model with a multi-label binary classification head on the AmiGO dataset of GO term-annotated protein sequences. To begin training with the default arguments, you can enter the command below.
 
