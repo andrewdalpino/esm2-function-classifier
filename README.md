@@ -23,22 +23,12 @@ The following pretrained models are available on HuggingFace Hub.
 | [andrewdalpino/ESM2-150M-Protein-Molecular-Function](https://huggingface.co/andrewdalpino/ESM2-150M-Protein-Molecular-Function) | 640 | 20 | 30 | 1026 | 153M |
 | [andrewdalpino/ESM2-150M-Protein-Cellular-Component](https://huggingface.co/andrewdalpino/ESM2-150M-Protein-Cellular-Component) | 640 | 20 | 30 | 1026 | 151M |
 
-### Using a Pretrained Model
+## Cloning the Repo
 
-Since the HuggingFace [Transformers](https://github.com/huggingface/transformers) library supports the [ESM](https://huggingface.co/docs/transformers/en/model_doc/esm) architecture natively, we can start protein function calling quickly in just a few lines of code.
+You'll need the code in the repository to train the model. To clone the repo onto your local machine enter the command like in the example below.
 
 ```sh
-pip install transformers
-```
-
-```python
-from transformers import EsmTokenizer, EsmForSequenceClassification
-
-model_name = "andrewdalpino/ESM2-35M-Protein-Molecular-Function"
-
-tokenizer = EsmTokenizer.from_pretrained(model_name)
-
-model = EsmForSequenceClassification.from_pretrained(model_name)
+git clone https://github.com/andrewdalpino/ESMC-Function-Classifier
 ```
 
 ## Install Project Dependencies
@@ -51,6 +41,28 @@ python -m venv ./.venv
 source ./.venv/bin/activate
 
 pip install -r requirements.txt
+```
+
+## Using a Pretrained Model
+
+Since the HuggingFace [Transformers](https://github.com/huggingface/transformers) library supports the [ESM](https://huggingface.co/docs/transformers/en/model_doc/esm) architecture natively, we can start protein function calling quickly in just a few lines of code.
+
+First, make sure the HuggingFace Transformers library is installed.
+
+```sh
+pip install transformers
+```
+
+Then, you can load the pretrained weights from HuggingFace hub in just a few lines of code.
+
+```python
+from transformers import EsmTokenizer, EsmForSequenceClassification
+
+model_name = "andrewdalpino/ESM2-35M-Protein-Molecular-Function"
+
+tokenizer = EsmTokenizer.from_pretrained(model_name)
+
+model = EsmForSequenceClassification.from_pretrained(model_name)
 ```
 
 ## Fine-tuning
